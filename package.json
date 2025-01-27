@@ -1,0 +1,52 @@
+{
+  "name": "progress-palette",
+  "productName": "progress-palette",
+  "version": "1.0.0",
+  "description": "My Electron application description",
+  "main": "./dist-electron/main.js",
+  "scripts": {
+    "build:electron": "cd ./electron && tsc",
+    "start:electron": "set NODE_ENV=development&& electron-forge start",
+    "dev:electron": "npm run build:electron && npm run start:electron",
+    "build:react": "cd ./react && vite build",
+    "start:react": "cd ./react && vite",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "echo \"No linting configured\""
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.6.1",
+    "@electron-forge/maker-deb": "^7.6.1",
+    "@electron-forge/maker-rpm": "^7.6.1",
+    "@electron-forge/maker-squirrel": "^7.6.1",
+    "@electron-forge/maker-zip": "^7.6.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.6.1",
+    "@electron-forge/plugin-fuses": "^7.6.1",
+    "@electron/fuses": "^1.8.0",
+    "electron": "34.0.1"
+  },
+  "keywords": [],
+  "author": {
+    "name": "Mason DeWitt",
+    "email": "madewitt55@gmail.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "sqlite3": "^5.1.7",
+    "vite": "^6.0.11",
+    "@eslint/js": "^9.17.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.16",
+    "globals": "^15.14.0",
+    "typescript": "~5.6.2",
+    "typescript-eslint": "^8.18.2"
+  }
+}

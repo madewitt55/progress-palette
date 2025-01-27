@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+      "outDir": "../dist-electron", // Compiled files go here
+      "target": "ESNext",
+      "module": "CommonJS",
+      "strict": true,
+      "esModuleInterop": true,
+      "forceConsistentCasingInFileNames": true,
+      "sourceMap": true
+    },
+    "include": ["**/*.ts", "**/*.tsx"],
+  }
