@@ -1,4 +1,15 @@
 "use strict";
-// See the Electron documentation for details on how to use preload scripts:
-// https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
+Object.defineProperty(exports, "__esModule", { value: true });
+const electron_1 = require("electron");
+const api = {
+    // Returns all users
+    GetUsers: () => electron_1.ipcRenderer.invoke('get-users'),
+    // Checks username against password, returns boolean
+    LoginUser: (username, password) => {
+        return electron_1.ipcRenderer.invoke('login-user', { username, password });
+    },
+    // Returns currently logged-in user
+    GetCurrentUser: () => electron_1.ipcRenderer.invoke('get-curr-user')
+};
+electron_1.contextBridge.exposeInMainWorld('api', api);
 //# sourceMappingURL=preload.js.map

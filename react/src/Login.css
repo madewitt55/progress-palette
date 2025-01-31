@@ -1,0 +1,52 @@
+body {
+    background-color: #e4e4e4;
+    font-family: Alatsi;
+}
+
+.login-container {
+    margin: 0;
+    padding: 0;
+    width: 83%;
+    height: 75%;
+    color: white;
+    display: inline-block;
+}
+
+.login, .about {
+    height: 100%;
+    float: left; /* Side by side alignment */
+}
+
+.login {
+    background-color: white;
+    color: #2f2f30;
+    width: 45%;
+}
+
+.about {
+    background-color: #1c6ea1;
+    width: 55%;
+}
+
+.login-form {
+    width: 80%;
+    height: 70%;
+    margin-left: 10%;
+    margin-top: 15%;
+}
+
+.about-container {
+    height: 50%;
+    width: 80%;
+    margin-left: 10%;
+    margin-top: 25%;
+    text-align: center;
+}
+
+.login-btn {
+    background-color:#1c6ea1;
+}
+
+.create-acc-btn {
+    color: #1c6ea1;
+}

@@ -1,6 +1,7 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
 const { isDev } = require('./util.js');
+const { InitUserController } = require('./user_controller.js');
 
 const createWindow = () => {
   // Create the browser window.
@@ -48,3 +49,7 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
+
+app.on('ready', () => {
+    InitUserController();
+});

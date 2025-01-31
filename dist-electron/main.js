@@ -1,7 +1,8 @@
 "use strict";
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
 const { isDev } = require('./util.js');
+const { InitUserController } = require('./user_controller.js');
 const createWindow = () => {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
@@ -43,9 +44,7 @@ app.on('window-all-closed', () => {
 });
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./progress-palette-db.db', sqlite3.OPEN_READWRITE, (err) => {
-    if (err)
-        return console.error(err.message);
+app.on('ready', () => {
+    InitUserController();
 });
 //# sourceMappingURL=main.js.map
