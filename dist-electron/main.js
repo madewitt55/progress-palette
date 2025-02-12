@@ -4,7 +4,7 @@ const path = require('node:path');
 const { isDev } = require('./util.js');
 const { InitUserController } = require('./user_controller.js');
 const createWindow = () => {
-    // Create the browser window.
+    // Create the browser window
     const mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
@@ -14,7 +14,7 @@ const createWindow = () => {
     });
     // and load the index.html of the app.
     if (isDev) {
-        mainWindow.loadURL('http://localhost:5173');
+        mainWindow.loadURL('http://localhost:5173/home');
         mainWindow.webContents.openDevTools();
     }
     else {

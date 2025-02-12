@@ -8,12 +8,16 @@ type response = {
 
 export function InitUserController() : void {
     let currUser : db.user | null = null;
+    
+    // Used for development to skip login screen
+    db.ValidateLogin('madewitt', '123').then((user : db.user | null) => {
+        currUser = user;
+    });
 
     // Returns array of all users
     ipcMain.handle('get-users', async (event, args) : Promise<response> => {
         try {
             const users : db.user[] = await db.GetUsers();
-            const sanitizedUsers : db.user[] = users.map(({ password, ...other}) => other); // Omit all passwords
             return { success: true, data: users };
         } catch (err: any) {
             return { success: false, data: err};
@@ -22,15 +26,24 @@ export function InitUserController() : void {
     // Checks username and password combo, returns boolean
     ipcMain.handle('login-user', async (event, args : any) : Promise<response> => {
         try {
-            const user : db.user = await db.ValidateLogin(args.username, args.password);
-            currUser = user; // Set currUser, exclude password
-            return { success: true, data: user ? true : false };
-        } catch (err: any) {
+            const user : db.user | null = await db.ValidateLogin(args.username, args.password);
+            currUser = user;
+            return { success: true, data: user };
+        } catch (err : any) {
             return { success: false, data: err };
         }
     });
     // Returns currently logged-in user
     ipcMain.handle('get-curr-user', async (event, args : any) : Promise<response> => {
         return { success: true, data: currUser }; // currUser is null if not logged in
+    });
+    // Returns all projects for given username
+    ipcMain.handle('get-user-projects', async (event, args : any) : Promise<response> => {
+        try {
+            const projects : db.project[] = await db.GetProjects(args.username);
+            return { success: true, data: projects }
+        } catch (err : any) {
+            return { success: false, data: err }
+        }
     });
 }

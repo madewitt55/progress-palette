@@ -1,3 +1,9 @@
+# Bootstrap
+/react/src/assets/bootstrap/
+
+# Db file
+*.db
+
 # Logs
 logs
 *.log

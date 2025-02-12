@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetUsers = GetUsers;
 exports.ValidateLogin = ValidateLogin;
+exports.GetProjects = GetProjects;
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./dist-electron/progress-db.db', sqlite3.OPEN_READWRITE, (err) => {
     if (err)
@@ -9,7 +10,8 @@ const db = new sqlite3.Database('./dist-electron/progress-db.db', sqlite3.OPEN_R
 });
 // QUERIES
 const getAllUsers = 'SELECT username, created_at FROM users';
-const isValidLogin = 'SELECT username, created_at FROM users WHERE username = ? AND password = ?';
+const isValidLogin = 'SELECT * FROM users WHERE username = ? AND password = ?';
+const getUserProjects = 'SELECT * FROM projects WHERE username = ?';
 // Returns promise for list of all users
 function GetUsers() {
     return new Promise((resolve, reject) => {
@@ -17,6 +19,10 @@ function GetUsers() {
             if (err) {
                 return reject(err.message);
             }
+            rows.map((user) => {
+                const { password, ...sanitizedUser } = user;
+                return sanitizedUser;
+            });
             resolve(rows);
         });
     });
@@ -28,7 +34,24 @@ function ValidateLogin(username, password) {
             if (err) {
                 return reject(err);
             }
-            resolve(rows[0]);
+            else if (rows.length) {
+                const { password, ...user } = rows[0]; // Omit password
+                resolve(user);
+            }
+            else {
+                resolve(null);
+            }
+        });
+    });
+}
+// Returns all projects owned by given username
+function GetProjects(username) {
+    return new Promise((resolve, reject) => {
+        db.all(getUserProjects, [username], (err, rows) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(rows);
         });
     });
 }

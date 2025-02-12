@@ -8,6 +8,8 @@ const api = {
         return ipcRenderer.invoke('login-user', { username, password })
     },
     // Returns currently logged-in user
-    GetCurrentUser: () => ipcRenderer.invoke('get-curr-user')
+    GetCurrentUser: () => ipcRenderer.invoke('get-curr-user'),
+    // Returns all projects for given username
+    GetProjects: (username : string) => ipcRenderer.invoke('get-user-projects', { username })
 }
 contextBridge.exposeInMainWorld('api', api);

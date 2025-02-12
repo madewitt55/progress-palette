@@ -28,11 +28,14 @@ const electron_1 = require("electron");
 const db = __importStar(require("./db.js"));
 function InitUserController() {
     let currUser = null;
+    // Used for development to skip login screen
+    db.ValidateLogin('madewitt', '123').then((user) => {
+        currUser = user;
+    });
     // Returns array of all users
     electron_1.ipcMain.handle('get-users', async (event, args) => {
         try {
             const users = await db.GetUsers();
-            const sanitizedUsers = users.map(({ password, ...other }) => other); // Omit all passwords
             return { success: true, data: users };
         }
         catch (err) {
@@ -43,8 +46,8 @@ function InitUserController() {
     electron_1.ipcMain.handle('login-user', async (event, args) => {
         try {
             const user = await db.ValidateLogin(args.username, args.password);
-            currUser = user; // Set currUser, exclude password
-            return { success: true, data: user ? true : false };
+            currUser = user;
+            return { success: true, data: user };
         }
         catch (err) {
             return { success: false, data: err };
@@ -53,6 +56,16 @@ function InitUserController() {
     // Returns currently logged-in user
     electron_1.ipcMain.handle('get-curr-user', async (event, args) => {
         return { success: true, data: currUser }; // currUser is null if not logged in
+    });
+    // Returns all projects for given username
+    electron_1.ipcMain.handle('get-user-projects', async (event, args) => {
+        try {
+            const projects = await db.GetProjects(args.username);
+            return { success: true, data: projects };
+        }
+        catch (err) {
+            return { success: false, data: err };
+        }
     });
 }
 //# sourceMappingURL=user_controller.js.map
