@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+# UNRELEASED
+
 ## [0.1.0] - 2025-01-31
 
 ### Added
@@ -27,3 +29,15 @@ this omission now takes place in the root database functions
 
 ### Removed
 - Untracked database file
+
+## [0.1.2] - 20250-02-18
+
+### Added
+- GridView component using react-grid-layout
+- Button to create new widgets (in Home) that display placeholder text 
+- Widget staging area where new, unsaved widgets are placed before user chooses their position
+- User's name and default profile picture appear in top left of Home
+
+### Changed
+- Content window in Home to now display new GridView component
+- 'Select Project' button to say 'Select Palette'

@@ -1,0 +1,15 @@
+.content {
+    width: 87vw;
+    height: 89vh;
+    background-color: #EFE9D5;
+}
+
+.widget {
+    background-color: lightblue;
+    color: white;
+}
+
+.staging {
+    background-color: lightcoral;
+    color: white;
+}
