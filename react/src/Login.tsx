@@ -24,7 +24,6 @@ function Login() {
                 if (res.data) {
                     // Successful login
                     navigate('/home');
-
                 }
                 else {
                     toast.warning("Invalid login credentials.");

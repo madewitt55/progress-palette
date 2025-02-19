@@ -6,7 +6,7 @@ import './assets/bootstrap/bootstrap.bundle.min'
 import './Home.css';
 import './index.css';
 
-import GridSystem from './GridView.tsx';
+import GridSystem from './GridSystem.tsx';
 
 function Home() {
     const [user, setUser] = useState<user | null>(null);
@@ -22,6 +22,7 @@ function Home() {
         }
     }
 
+    // Calls AddWidget in GridSystem component
     function AddWidget() : void {
         if (gridRef.current) {
             gridRef.current.AddWidget();
@@ -30,7 +31,7 @@ function Home() {
 
     useEffect(() => {
         // Fetches the currently logged in user
-        async function GetUser() {
+        async function FetchUser() {
             const res : response = await window.api.GetCurrentUser();
             if (res.success && res.data) {
                 setUser(res.data);
@@ -42,12 +43,12 @@ function Home() {
             }
         }
 
-        GetUser();
+        FetchUser();
     }, []);
 
     useEffect(() => {
         // Fetches the user's projects
-        async function GetProjects(username : string) {
+        async function FetchProjects(username : string) {
             const res : response = await window.api.GetProjects(username);
             if (res.success) {
                 setProjects(res.data);
@@ -57,7 +58,7 @@ function Home() {
             }
         }
         if (user) {
-            GetProjects(user.username);
+            FetchProjects(user.username);
         }
     }, [user]);
 
@@ -93,7 +94,7 @@ function Home() {
                 </div>
             </div>
             <div className="content">
-                <GridSystem ref={gridRef}/>
+                <GridSystem project={selectedProject} ref={gridRef} />
             </div>
         </div>
         </>

@@ -30,7 +30,7 @@ this omission now takes place in the root database functions
 ### Removed
 - Untracked database file
 
-## [0.1.2] - 20250-02-18
+## [0.2.0] - 2025-02-18
 
 ### Added
 - GridView component using react-grid-layout
@@ -41,3 +41,17 @@ this omission now takes place in the root database functions
 ### Changed
 - Content window in Home to now display new GridView component
 - 'Select Project' button to say 'Select Palette'
+
+## [0.2.1] - 2025-02-19
+
+### Added 
+- Simple database table for widgets
+- Simple database table for widget position and size
+- Database function and IPC handling to get all widgets from a project, layout included
+- Database functions and IPC handling to create a widget with layout included, and update a list of widget layouts
+- GridSystem now saves new widgets and saves moved widgets positions
+
+### Changed
+- Renamed list of GridLayouts from 'layout' to 'grid' for simplicity
+- Renamed GridView.tsx and GridView.css to GridSystem
+- Added projects_controller and moved IPC handling for anything project related there

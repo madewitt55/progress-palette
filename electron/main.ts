@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
 const { isDev } = require('./util.js');
 const { InitUserController } = require('./user_controller.js');
+const { InitProjectController } = require('./project_controller.js')
 
 const createWindow = () => {
   // Create the browser window
@@ -52,4 +53,5 @@ app.on('window-all-closed', () => {
 
 app.on('ready', () => {
     InitUserController();
+    InitProjectController();
 });

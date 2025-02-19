@@ -37,13 +37,4 @@ export function InitUserController() : void {
     ipcMain.handle('get-curr-user', async (event, args : any) : Promise<response> => {
         return { success: true, data: currUser }; // currUser is null if not logged in
     });
-    // Returns all projects for given username
-    ipcMain.handle('get-user-projects', async (event, args : any) : Promise<response> => {
-        try {
-            const projects : db.project[] = await db.GetProjects(args.username);
-            return { success: true, data: projects }
-        } catch (err : any) {
-            return { success: false, data: err }
-        }
-    });
 }

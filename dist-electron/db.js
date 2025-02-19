@@ -3,6 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetUsers = GetUsers;
 exports.ValidateLogin = ValidateLogin;
 exports.GetProjects = GetProjects;
+exports.GetWidgets = GetWidgets;
+exports.CreateWidget = CreateWidget;
+exports.UpdateAllWidgetLayouts = UpdateAllWidgetLayouts;
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./dist-electron/progress-db.db', sqlite3.OPEN_READWRITE, (err) => {
     if (err)
@@ -12,7 +15,15 @@ const db = new sqlite3.Database('./dist-electron/progress-db.db', sqlite3.OPEN_R
 const getAllUsers = 'SELECT username, created_at FROM users';
 const isValidLogin = 'SELECT * FROM users WHERE username = ? AND password = ?';
 const getUserProjects = 'SELECT * FROM projects WHERE username = ?';
-// Returns promise for list of all users
+const getProjectWidgets = 'SELECT * FROM widgets WHERE project_id = ?';
+const getWidgetLayout = `SELECT x, y, w, h FROM widget_layouts 
+WHERE widget_id = ?`;
+const createWidget = 'INSERT INTO widgets(project_id, name) VALUES (?,?)';
+const createWidgetLayout = `INSERT INTO widget_layouts(widget_id, x, y, w, h) 
+VALUES (?,?,?,?,?)`;
+const updateWidgetLayout = `UPDATE widget_layouts SET x=?, y=?, w=?, h=? 
+WHERE widget_id=?`;
+// Returns list of all users
 function GetUsers() {
     return new Promise((resolve, reject) => {
         db.all(getAllUsers, [], (err, rows) => {
@@ -20,14 +31,14 @@ function GetUsers() {
                 return reject(err.message);
             }
             rows.map((user) => {
-                const { password, ...sanitizedUser } = user;
+                const { password, ...sanitizedUser } = user; // Omit password
                 return sanitizedUser;
             });
             resolve(rows);
         });
     });
 }
-// Returns whether login is valid given username and password
+// Returns user given username and password; returns null if invalid combo
 function ValidateLogin(username, password) {
     return new Promise((resolve, reject) => {
         db.all(isValidLogin, [username, password], (err, rows) => {
@@ -35,8 +46,8 @@ function ValidateLogin(username, password) {
                 return reject(err);
             }
             else if (rows.length) {
-                const { password, ...user } = rows[0]; // Omit password
-                resolve(user);
+                const { password, ...sanitizedUser } = rows[0]; // Omit password
+                resolve(sanitizedUser);
             }
             else {
                 resolve(null);
@@ -52,6 +63,81 @@ function GetProjects(username) {
                 return reject(err);
             }
             resolve(rows);
+        });
+    });
+}
+// Returns all widgets belong to given project id
+function GetWidgets(projectId) {
+    return new Promise((resolve, reject) => {
+        if (isNaN(projectId)) {
+            return reject('Invalid projectId');
+        }
+        // Retrieve widgets
+        db.all(getProjectWidgets, [projectId.toString()], (err, widgetRows) => {
+            if (err) {
+                return reject(err);
+            }
+            // Populate widgets with layout data (if found)
+            const widgetPromises = widgetRows.map((widget) => {
+                return new Promise((resolveWidget) => {
+                    db.all(getWidgetLayout, [widget.id], (err, layoutRows) => {
+                        if (layoutRows.length) {
+                            widget.layout = layoutRows[0];
+                        }
+                        resolveWidget(widget);
+                    });
+                });
+            });
+            // Await all promises before resolving widgets array
+            Promise.all(widgetPromises).then((widgetsWithLayout) => {
+                resolve(widgetsWithLayout);
+            }).catch(reject);
+        });
+    });
+}
+// Creates a widget, returns true if successful 
+function CreateWidget(project_id, name, layout) {
+    return new Promise((resolve, reject) => {
+        // Create widget row entry
+        db.run(createWidget, [project_id, name], function (err) {
+            if (err) {
+                return reject(err);
+            }
+            // Create widget layout row with widget id
+            const newWidgetId = this.lastID;
+            db.run(createWidgetLayout, [newWidgetId, layout.x, layout.y, layout.w, layout.h], (err) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(newWidgetId); // Resolve new id
+            });
+        });
+    });
+}
+// Updates the layout of all widgets
+function UpdateAllWidgetLayouts(grid) {
+    return new Promise((resolve, reject) => {
+        db.serialize(() => {
+            db.run('BEGIN TRANSACTION'); // Start transaction
+            const stmt = db.prepare(updateWidgetLayout);
+            grid.forEach((layout) => {
+                stmt.run(layout.x, layout.y, layout.w, layout.h, layout.i, (err) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                });
+            });
+            stmt.finalize((err) => {
+                if (err) {
+                    return reject(err);
+                }
+                db.run('COMMIT', (commitErr) => {
+                    if (commitErr) {
+                        return reject(commitErr);
+                    }
+                    resolve();
+                });
+            });
         });
     });
 }

@@ -23,39 +23,48 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.InitUserController = InitUserController;
+exports.InitProjectController = InitProjectController;
 const electron_1 = require("electron");
 const db = __importStar(require("./db.js"));
-function InitUserController() {
-    let currUser = null;
-    // Used for development to skip login screen
-    db.ValidateLogin('madewitt', '123').then((user) => {
-        currUser = user;
-    });
-    // Returns array of all users
-    electron_1.ipcMain.handle('get-users', async (event, args) => {
+// Returns all widgets for given project id
+// Layout is included if record is found
+function InitProjectController() {
+    electron_1.ipcMain.handle('get-project-widgets', async (event, args) => {
         try {
-            const users = await db.GetUsers();
-            return { success: true, data: users };
+            const widgets = await db.GetWidgets(args.projectId);
+            return { success: true, data: widgets };
         }
         catch (err) {
             return { success: false, data: err };
         }
-    });
-    // Checks username and password combo, returns boolean
-    electron_1.ipcMain.handle('login-user', async (event, args) => {
-        try {
-            const user = await db.ValidateLogin(args.username, args.password);
-            currUser = user;
-            return { success: true, data: user };
-        }
-        catch (err) {
-            return { success: false, data: err };
-        }
-    });
-    // Returns currently logged-in user
-    electron_1.ipcMain.handle('get-curr-user', async (event, args) => {
-        return { success: true, data: currUser }; // currUser is null if not logged in
     });
 }
-//# sourceMappingURL=user_controller.js.map
+// Returns all projects for given username
+electron_1.ipcMain.handle('get-user-projects', async (event, args) => {
+    try {
+        const projects = await db.GetProjects(args.username);
+        return { success: true, data: projects };
+    }
+    catch (err) {
+        return { success: false, data: err };
+    }
+});
+electron_1.ipcMain.handle('create-widget', async (event, args) => {
+    try {
+        const id = await db.CreateWidget(args.projectId, args.name, args.layout);
+        return { success: true, data: id };
+    }
+    catch (err) {
+        return { success: false, data: err };
+    }
+});
+electron_1.ipcMain.handle('update-all-widget-layouts', async (event, args) => {
+    try {
+        db.UpdateAllWidgetLayouts(args.grid);
+        return { success: true, data: null };
+    }
+    catch (err) {
+        return { success: false, data: err };
+    }
+});
+//# sourceMappingURL=project_controller.js.map

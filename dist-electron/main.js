@@ -3,6 +3,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
 const { isDev } = require('./util.js');
 const { InitUserController } = require('./user_controller.js');
+const { InitProjectController } = require('./project_controller.js');
 const createWindow = () => {
     // Create the browser window
     const mainWindow = new BrowserWindow({
@@ -46,5 +47,6 @@ app.on('window-all-closed', () => {
 // code. You can also put them in separate files and import them here.
 app.on('ready', () => {
     InitUserController();
+    InitProjectController();
 });
 //# sourceMappingURL=main.js.map

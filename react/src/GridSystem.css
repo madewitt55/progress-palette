@@ -9,7 +9,11 @@
     color: white;
 }
 
-.staging {
-    background-color: lightcoral;
+.staged {
+    background-color: gray;
     color: white;
+}
+
+.staging {
+    border: 1px solid black;
 }
