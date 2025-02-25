@@ -55,3 +55,15 @@ this omission now takes place in the root database functions
 - Renamed list of GridLayouts from 'layout' to 'grid' for simplicity
 - Renamed GridView.tsx and GridView.css to GridSystem
 - Added projects_controller and moved IPC handling for anything project related there
+
+## [0.2.2] - 2025-02-24
+
+### Changed
+- Database functions now use the Layout type imported from react-grid-layout rather
+than their own custom type
+- Response type now has just the two properties data and err. Success field removed
+for simplicity
+- Completely rewrote overly complex GridSystem component
+- GridSystem saves new widgets and saves updated positions and sizes
+- Widget_layouts table now uses field i instead of widget_id to match imported
+Layout type

@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import GridLayout from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
@@ -7,19 +7,42 @@ import './GridSystem.css'
 type props = {
     project : project | null;
 }
+
 function GridSystem(props : props, ref : any) {
     const NUM_COLS : number = 12;
     const NUM_ROWS : number = 10;
     const NEW_WIDGET_SIZE : number = 2;
-    const [isWidgetStaged, setIsWidgetStaged] = useState<boolean>(false);
-    const STAGING_PLACEHOLDER : GridLayout.Layout = {
-        i: 'staging', x: 0, y: 0, w: NEW_WIDGET_SIZE, h: NEW_WIDGET_SIZE
-    }
-    const [grid, setGrid] = useState<GridLayout.Layout[]>([STAGING_PLACEHOLDER]);
+    const [grid, setGrid] = useState<GridLayout.Layout[]>([]);
     const [widgets, setWidgets] = useState<widget[]>([]);
-
-    function ResetGrid() {
-        setGrid([STAGING_PLACEHOLDER]);
+    // Differentiates user grid interactions from grid state changes
+    const userInteracting = useRef(false);
+    const STAGING = {
+        widget: {
+            id: -1,
+            project_id: 0,
+            name: ''
+        },
+        layout: {
+            i: 'staging',
+            x: 0,
+            y: 0,
+            w: NEW_WIDGET_SIZE,
+            h: NEW_WIDGET_SIZE
+        }
+    }
+    const STAGED = {
+        widget: {
+            id: 0,
+            project_id: 0,
+            name: ''
+        },
+        layout: {
+            i: 'staged',
+            x: 0,
+            y: 0,
+            w: NEW_WIDGET_SIZE,
+            h: NEW_WIDGET_SIZE
+        }
     }
 
     // Dynamically store window size
@@ -41,136 +64,122 @@ function GridSystem(props : props, ref : any) {
         window.addEventListener('resize', HandleWindowResize);
     }, []);
 
-    async function FetchWidgets(projectId : number) {
-        ResetGrid();
+    // Retrieves all widgets from database
+    async function FetchWidgets(projectId : number) : Promise<void> {
         const res : response = await window.api.GetWidgets(projectId);
-        if (res.success) {
-            setWidgets(res.data);
+        if (res.err) {
+            alert(res.err);
         }
-        else {
-            alert(res.data);
+        else if (res.data.widgets.length) {
+            console.log(res.data);
+            setWidgets([...res.data.widgets]);
+            UpdateGrid([...res.data.layouts, STAGING.layout]);
         }
     }
-
+    // Fetch widgets on project change
     useEffect(() => {
         if (props.project) {
             FetchWidgets(props.project.id);
         }
     }, [props.project]);
 
-    useEffect(() => {
-        function LoadWidgets() {
-            const newGrid = [...grid];
-            widgets.forEach((widget : widget) => {
-                if (widget.layout) {
-                    const widgetLayout : GridLayout.Layout = { ...widget.layout, i: widget.id.toString() };
-                    newGrid.push(widgetLayout);
+    function UpdateGrid(newGrid : GridLayout.Layout[]) : void {
+        // If project selected
+        if (props.project) {
+            const stagedLayout = newGrid.find((l : GridLayout.Layout) => l.i === 'staged');
+            if (stagedLayout) {
+                // Widget moved completely out of staging area
+                if (stagedLayout.x >= NEW_WIDGET_SIZE) {
+                    // Show staging area
+                    newGrid.push(STAGING.layout);
+                    
+                    // Create widget in database
+                    SaveWidget(props.project.id, 'new', stagedLayout).then((newWidgetId : number) => {
+                        if (newWidgetId && props.project) {
+                            stagedLayout.i = newWidgetId.toString(); // Update layout id
+                            // Add new widget
+                            setWidgets([...widgets, {
+                                id: newWidgetId,
+                                project_id: props.project.id,
+                                name: 'new'
+                            }]);
+                        }
+                        else {
+                            return; // Prevent grid state update on error
+                        }
+                    });
                 }
-            });
-            setGrid(newGrid);
-        }
-        if (widgets.length) {
-            LoadWidgets();
-        }
-    }, [widgets]);
-
-    function AddWidget() {
-        if (props.project && !isWidgetStaged) {
-            const newWidget : GridLayout.Layout = {
-                i: 'staged',
-                x: 0,
-                y: 0,
-                w: NEW_WIDGET_SIZE,
-                h: NEW_WIDGET_SIZE
+                // Widget moved paritally out of staging area
+                else if (stagedLayout.x > 0) {
+                    stagedLayout.x = 0; // Move back to staging
+                }
             }
-            // Replace staging placeholder with new widget
-            // Gives the appearance of the new widget being placed on top of it
-            const newLayout = [...grid.filter((widget : GridLayout.Layout) => {
-                return widget.i !== 'staging';
-            }), newWidget];
-            setIsWidgetStaged(true);
-            setGrid(newLayout);
+
+            setGrid(newGrid);
+            SaveGrid(newGrid);
         }
     }
 
-    // Runs on grid update
-    useEffect(() => {
-        async function CreateWidget(projectId : number, name : string, layout : widget_layout) : Promise<number> {
-            const res : response = await window.api.CreateWidget(projectId, name, layout);
-            if (res.success) {
-                return res.data; // New widget id
-            }
+    // Places new widget in staging area
+    function StageWidget() {
+        setWidgets(widgets.filter((w : widget) => w.id !== -1));
+        setGrid([...grid.filter((l : GridLayout.Layout) => l.i !== 'staging'), STAGED.layout]);
+    }
+
+    // Creates new widget in database, returns widget id
+    async function SaveWidget(projectId : number, name : string, layout: GridLayout.Layout) : Promise<number> {
+        const res : response = await window.api.CreateWidget(projectId, name, layout);
+        if (res.err) {
+            alert(res.err);
             return -1;
         }
-        if (props.project) {
-            if (isWidgetStaged) {
-                const stagedIndex = grid.findIndex((widget : GridLayout.Layout) => {
-                    return widget.i === 'staged';
-                });
-                // If staged widget moves partially out of staging zone
-                if (grid[stagedIndex]?.x == 1) {
-                    const newGrid = [...grid];
-                    newGrid[stagedIndex] = { ...newGrid[stagedIndex], x: 0 }
-                    setGrid(newGrid);
-                }
-                // If staged widget moved out of staging zone
-                else if (grid[stagedIndex]?.x > 1) {
-                    const newWidgetLayout : widget_layout = grid[stagedIndex];
-                    CreateWidget(props.project.id, 'test', newWidgetLayout).then((newWidgetId : number) => {
-                        if (newWidgetId != -1) {
-                            const newGrid = [...grid, STAGING_PLACEHOLDER]; // Add back staging placeholder
-                            newGrid[stagedIndex] = { ...newGrid[stagedIndex], i: newWidgetId.toString() }
-                            setGrid(newGrid);
-                            setIsWidgetStaged(false);
-                        }
-                    });
-                    FetchWidgets(props.project.id);
-                }
-            }
-
-            window.api.UpdateAllWidgetLayouts(grid).then((res : response) => {
-                console.log(res);
-            });
+        else {
+            return res.data; // New widget id
         }
-    }, [grid]);
+    }
 
+    // Updates all widget positions in database
+    async function SaveGrid(newGrid : GridLayout.Layout[]) : Promise<void> {
+        window.api.UpdateAllWidgetLayouts(newGrid);
+    }
+    
   // Expose to parent component (Home.tsx)
   useImperativeHandle(ref, () => ({
-    AddWidget,
+    StageWidget,
   }));
   
   return (
     <>
     <GridLayout
-
       className="layout"
       layout={grid}
       cols={NUM_COLS} // Number of columns in the grid
       maxRows={NUM_ROWS}
       rowHeight={windowSize.height * 0.89 / 12} // Height of each row
       width={windowSize.width * 0.87} // Total grid width
-      onLayoutChange={(newLayout) => {
-        setGrid(newLayout);
+      onDragStart={() => userInteracting.current = true}
+      onResizeStart={() => userInteracting.current = true}
+      onLayoutChange={(newGrid : GridLayout.Layout[]) => {
+        if (userInteracting.current) {
+            UpdateGrid(newGrid);
+        }
+        userInteracting.current = false;
       }}
     >
-      {grid.map((widget : GridLayout.Layout) => (
-        <div
-            key={widget.i}
-            className={widget.i === 'staging' ? 'staging' : 
-                (widget.i === 'staged') ? 'staged' : 'widget'}
-            data-grid={{
-                ...widget,
-                static: widget.i === "staging", // Makes staging area non resizable or draggable
-            }}
-        >
-            <h4>
-                {/* Displays name of widget, 'New Widget' if staged, and blank for staging area */}
-                {!isNaN(+widget.i) ? widgets.find((w : widget) => w.id.toString() == widget.i)?.name :
-                (widget.i === 'staged' ? 'New Widget' : '')} 
-            </h4>
-            {/* WIDGET COMPONENT HERE */}
-        </div>
-      ))}
+        {grid.map((layout : GridLayout.Layout) => (
+            <div
+                key={layout.i}
+                data-grid={{
+                    ...layout,
+                    static: layout.i === "staging", // Makes staging area non resizable or draggable
+                }}
+                className={
+                    layout.i === 'staging' || layout.i === 'staged' ? layout.i : 'widget'
+                }
+            >
+                {layout.i}
+            </div>
+        ))}
     </GridLayout>
     </>
   );

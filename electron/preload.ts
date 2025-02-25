@@ -1,13 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { UpdateAllWidgetLayouts } from './db';
-
-type widget_layout = {
-    widget_id?: number;
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-}
+import type { Layout } from 'react-grid-layout';
 
 const api = {
     // Returns all users
@@ -23,10 +16,10 @@ const api = {
     // Returns all widgets for given project id
     GetWidgets: (projectId : number) => ipcRenderer.invoke('get-project-widgets', { projectId }),
     // Creates a widget
-    CreateWidget: (projectId : number, name : string, layout : widget_layout) => {
+    CreateWidget: (projectId : number, name : string, layout : Layout) => {
         return ipcRenderer.invoke('create-widget', { projectId, name, layout });
     },
-    UpdateAllWidgetLayouts: (grid : widget_layout[]) => {
+    UpdateAllWidgetLayouts: (grid : Layout[]) => {
         return ipcRenderer.invoke('update-all-widget-layouts', { grid });
     }
 }

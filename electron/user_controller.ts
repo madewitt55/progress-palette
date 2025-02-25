@@ -2,8 +2,8 @@ import { ipcMain } from 'electron';
 import * as db from './db.js';
 
 type response = {
-    success: boolean;
     data: any;
+    err: any;
 };
 
 export function InitUserController() : void {
@@ -18,9 +18,9 @@ export function InitUserController() : void {
     ipcMain.handle('get-users', async (event, args) : Promise<response> => {
         try {
             const users : db.user[] = await db.GetUsers();
-            return { success: true, data: users };
+            return { data: users, err: null };
         } catch (err: any) {
-            return { success: false, data: err};
+            return { data: null, err: err };
         }
     });
     // Checks username and password combo, returns boolean
@@ -28,13 +28,13 @@ export function InitUserController() : void {
         try {
             const user : db.user | null = await db.ValidateLogin(args.username, args.password);
             currUser = user;
-            return { success: true, data: user };
+            return { data: user, err: null };
         } catch (err : any) {
-            return { success: false, data: err };
+            return { data: null, err: err };
         }
     });
     // Returns currently logged-in user
     ipcMain.handle('get-curr-user', async (event, args : any) : Promise<response> => {
-        return { success: true, data: currUser }; // currUser is null if not logged in
+        return { data: currUser, err: null }; // currUser is null if not logged in
     });
 }

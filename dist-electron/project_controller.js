@@ -31,11 +31,11 @@ const db = __importStar(require("./db.js"));
 function InitProjectController() {
     electron_1.ipcMain.handle('get-project-widgets', async (event, args) => {
         try {
-            const widgets = await db.GetWidgets(args.projectId);
-            return { success: true, data: widgets };
+            const widgetData = await db.GetWidgets(args.projectId);
+            return { data: widgetData, err: null };
         }
         catch (err) {
-            return { success: false, data: err };
+            return { data: null, err: err };
         }
     });
 }
@@ -43,28 +43,30 @@ function InitProjectController() {
 electron_1.ipcMain.handle('get-user-projects', async (event, args) => {
     try {
         const projects = await db.GetProjects(args.username);
-        return { success: true, data: projects };
+        return { data: projects, err: null };
     }
     catch (err) {
-        return { success: false, data: err };
+        return { data: null, err: err };
     }
 });
+// Creates a widget
 electron_1.ipcMain.handle('create-widget', async (event, args) => {
     try {
         const id = await db.CreateWidget(args.projectId, args.name, args.layout);
-        return { success: true, data: id };
+        return { data: id, err: null };
     }
     catch (err) {
-        return { success: false, data: err };
+        return { data: null, err: err };
     }
 });
+// Updates the position of the entire grid
 electron_1.ipcMain.handle('update-all-widget-layouts', async (event, args) => {
     try {
         db.UpdateAllWidgetLayouts(args.grid);
-        return { success: true, data: null };
+        return { data: null, err: null };
     }
     catch (err) {
-        return { success: false, data: err };
+        return { data: null, err: err };
     }
 });
 //# sourceMappingURL=project_controller.js.map

@@ -4,8 +4,8 @@ export {};
 declare global {
     // Standard format for data returned from main process
     type response = {
-        success : boolean;
         data : any;
+        err : any;
     };
     // Holds all fields of user table in database
     type user = {
@@ -22,17 +22,9 @@ declare global {
         name: string;
     };
     type widget = {
-        id: number;
+        id: number | string;
         project_id: number;
         name: string;
-        layout?: widget_layout;
-    }
-    type widget_layout = {
-        widget_id?: number;
-        x: number;
-        y: number;
-        w: number;
-        h: number;
     }
     // See preload.ts for function definitions and documentation
     interface Window {

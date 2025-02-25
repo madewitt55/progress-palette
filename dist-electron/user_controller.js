@@ -36,10 +36,10 @@ function InitUserController() {
     electron_1.ipcMain.handle('get-users', async (event, args) => {
         try {
             const users = await db.GetUsers();
-            return { success: true, data: users };
+            return { data: users, err: null };
         }
         catch (err) {
-            return { success: false, data: err };
+            return { data: null, err: err };
         }
     });
     // Checks username and password combo, returns boolean
@@ -47,15 +47,15 @@ function InitUserController() {
         try {
             const user = await db.ValidateLogin(args.username, args.password);
             currUser = user;
-            return { success: true, data: user };
+            return { data: user, err: null };
         }
         catch (err) {
-            return { success: false, data: err };
+            return { data: null, err: err };
         }
     });
     // Returns currently logged-in user
     electron_1.ipcMain.handle('get-curr-user', async (event, args) => {
-        return { success: true, data: currUser }; // currUser is null if not logged in
+        return { data: currUser, err: null }; // currUser is null if not logged in
     });
 }
 //# sourceMappingURL=user_controller.js.map

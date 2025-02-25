@@ -20,17 +20,15 @@ function Login() {
         toast.dismiss();
         if (form.username.length && form.password.length) {
             const res : response = await window.api.LoginUser(form.username, form.password);
-            if (res.success) {
-                if (res.data) {
-                    // Successful login
-                    navigate('/home');
-                }
-                else {
-                    toast.warning("Invalid login credentials.");
-                }
+            if (res.err) {
+                toast.error("An internal error has occured. Please try again later.");
+            }
+            // Successful login
+            else if (res.data) {
+                navigate('/home');
             }
             else {
-                toast.error("An internal error has occured. Please try again later.");
+                toast.warning("Invalid login credentials.");
             }
         }
         else {

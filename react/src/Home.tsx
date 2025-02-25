@@ -23,9 +23,9 @@ function Home() {
     }
 
     // Calls AddWidget in GridSystem component
-    function AddWidget() : void {
+    function StageWidget() : void {
         if (gridRef.current) {
-            gridRef.current.AddWidget();
+            gridRef.current.StageWidget();
         }
     }
 
@@ -33,12 +33,12 @@ function Home() {
         // Fetches the currently logged in user
         async function FetchUser() {
             const res : response = await window.api.GetCurrentUser();
-            if (res.success && res.data) {
+            if (res.data) {
                 setUser(res.data);
             }
-            // Database error or no user logged in
+            // No user logged in
             else {
-                toast.error("There was an error verifying your credentials. Redirecting to login...");
+                toast.error("Whoops! Looks like your login has expired");
                 setTimeout(() => navigate('/'), 3000); // 3s delay
             }
         }
@@ -50,11 +50,11 @@ function Home() {
         // Fetches the user's projects
         async function FetchProjects(username : string) {
             const res : response = await window.api.GetProjects(username);
-            if (res.success) {
-                setProjects(res.data);
+            if (res.err) {
+                toast.error("Error retrieving projects");
             }
             else {
-                toast.error("Error retrieving projects");
+                setProjects(res.data);
             }
         }
         if (user) {
@@ -90,7 +90,7 @@ function Home() {
                                 </h6>
                               </li>)}
                     </ul>
-                    <button onClick={()=>AddWidget()}>New widget</button>
+                    <button onClick={()=>StageWidget()}>New widget</button>
                 </div>
             </div>
             <div className="content">

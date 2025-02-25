@@ -1,5 +1,7 @@
+import type { Layout } from 'react-grid-layout';
+
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./dist-electron/progress-db.db', sqlite3.OPEN_READWRITE, (err : any) => {
+const db = new sqlite3.Database('./dist-electron/progress-db.db', sqlite3.OPEN_READWRITE, (err : Error) => {
     if (err) return console.error(err.message);
 });
 
@@ -20,15 +22,6 @@ export type widget = {
     id: number;
     project_id: number;
     name: string;
-    layout?: widget_layout;
-}
-export type widget_layout = {
-    widget_id?: number;
-    i?: number;
-    x: number;
-    y: number;
-    w: number;
-    h: number;
 }
 
 // QUERIES
@@ -36,18 +29,17 @@ const getAllUsers : string = 'SELECT username, created_at FROM users';
 const isValidLogin : string = 'SELECT * FROM users WHERE username = ? AND password = ?';
 const getUserProjects : string = 'SELECT * FROM projects WHERE username = ?';
 const getProjectWidgets : string = 'SELECT * FROM widgets WHERE project_id = ?';
-const getWidgetLayout : string = `SELECT x, y, w, h FROM widget_layouts 
-WHERE widget_id = ?`; 
+const getWidgetLayout : string = 'SELECT * FROM widget_layouts WHERE i = ?'; 
 const createWidget : string = 'INSERT INTO widgets(project_id, name) VALUES (?,?)';
-const createWidgetLayout : string = `INSERT INTO widget_layouts(widget_id, x, y, w, h) 
+const createWidgetLayout : string = `INSERT INTO widget_layouts(i, x, y, w, h) 
 VALUES (?,?,?,?,?)`;
 const updateWidgetLayout : string = `UPDATE widget_layouts SET x=?, y=?, w=?, h=? 
-WHERE widget_id=?`;
+WHERE i=?`;
 
 // Returns list of all users
 export function GetUsers() : Promise<user[]> {
     return new Promise((resolve, reject) => {
-        db.all(getAllUsers, [], (err : any, rows : user[]) => {
+        db.all(getAllUsers, [], (err : Error, rows : user[]) => {
             if (err) {
                 return reject(err.message);
             }
@@ -62,9 +54,9 @@ export function GetUsers() : Promise<user[]> {
 // Returns user given username and password; returns null if invalid combo
 export function ValidateLogin(username : string, password : string) : Promise<user | null> {
     return new Promise((resolve, reject) => {
-        db.all(isValidLogin, [username, password], (err: object, rows : user[]) => {
+        db.all(isValidLogin, [username, password], (err : Error, rows : user[]) => {
             if (err) {
-                return reject(err);
+                return reject(err.message);
             }
             else if (rows.length) {
                 const {password, ...sanitizedUser} = rows[0]; // Omit password
@@ -79,58 +71,67 @@ export function ValidateLogin(username : string, password : string) : Promise<us
 // Returns all projects owned by given username
 export function GetProjects(username : string) : Promise<project[]> {
     return new Promise((resolve, reject) => {
-        db.all(getUserProjects, [username], (err : object, rows : project[]) => {
+        db.all(getUserProjects, [username], (err : Error, rows : project[]) => {
             if (err) {
-                return reject(err);
+                return reject(err.message);
             }
             resolve(rows);
         });
     });
 }
-// Returns all widgets belong to given project id
-export function GetWidgets(projectId : number) : Promise<widget[]> {
+// Returns an array of an array of widget and an array of layouts
+export function GetWidgets(projectId: number): Promise<{widgets : widget[], layouts : Layout[]}> {
     return new Promise((resolve, reject) => {
         if (isNaN(projectId)) {
             return reject('Invalid projectId');
         }
+
         // Retrieve widgets
-        db.all(getProjectWidgets, [projectId.toString()], (err : object, widgetRows : widget[]) => {
+        db.all(getProjectWidgets, [projectId], (err: Error, widgetRows: widget[]) => {
             if (err) {
-                return reject(err);
+                return reject(err.message);
             }
-            // Populate widgets with layout data (if found)
-            const widgetPromises = widgetRows.map((widget : widget) => {
-                return new Promise((resolveWidget) => {
-                    db.all(getWidgetLayout, [widget.id], (err : object, layoutRows : widget_layout[]) => {
+            
+            // If no widgets found, resolve empty
+            if (!widgetRows.length) {
+                return resolve({widgets: [], layouts: []});
+            }
+
+            const layouts: Layout[] = [];
+
+            // Fetch layouts for each widget
+            const widgetPromises : Promise<widget>[] = widgetRows.map((widget: widget) => {
+                return new Promise((resolveLayout) => {
+                    db.all(getWidgetLayout, [widget.id], (err: Error, layoutRows: Layout[]) => {
                         if (layoutRows.length) {
-                            widget.layout = layoutRows[0];
+                            layouts.push(layoutRows[0]); // Fill array
                         }
-                        resolveWidget(widget);
+                        resolveLayout(widget);
                     });
                 });
             });
 
-            // Await all promises before resolving widgets array
-            Promise.all(widgetPromises).then((widgetsWithLayout : any) => {
-                resolve(widgetsWithLayout);
+            // Await all promises before resolving with both arrays
+            Promise.all(widgetPromises).then((widgetsWithLayout : widget[]) => {
+                    resolve({widgets: widgetsWithLayout, layouts});
             }).catch(reject);
         });
     });
 }
 // Creates a widget, returns true if successful 
-export function CreateWidget(project_id : number, name : string, layout : widget_layout) : Promise<number> {
+export function CreateWidget(project_id : number, name : string, layout : Layout) : Promise<number> {
     return new Promise((resolve, reject) => {
         // Create widget row entry
-        db.run(createWidget, [project_id, name], function (this: any, err: any) {
+        db.run(createWidget, [project_id, name], function (this: any, err : Error) {
             if (err) {
-                return reject(err);
+                return reject(err.message);
             }
 
             // Create widget layout row with widget id
             const newWidgetId = this.lastID;
-            db.run(createWidgetLayout, [newWidgetId, layout.x, layout.y, layout.w, layout.h], (err: any) => {
+            db.run(createWidgetLayout, [newWidgetId, layout.x, layout.y, layout.w, layout.h], (err : Error) => {
                 if (err) {
-                    return reject(err);
+                    return reject(err.message);
                 }
                 resolve(newWidgetId); // Resolve new id
             });
@@ -138,28 +139,28 @@ export function CreateWidget(project_id : number, name : string, layout : widget
     });
 }
 // Updates the layout of all widgets
-export function UpdateAllWidgetLayouts(grid : widget_layout[]) : Promise<void> {
+export function UpdateAllWidgetLayouts(grid : Layout[]) : Promise<void> {
     return new Promise((resolve, reject) => {
         db.serialize(() => {
             db.run('BEGIN TRANSACTION'); // Start transaction
 
             const stmt = db.prepare(updateWidgetLayout);
 
-            grid.forEach((layout : widget_layout) => {
-                stmt.run(layout.x, layout.y, layout.w, layout.h, layout.i, (err: any) => {
+            grid.forEach((layout : Layout) => {
+                stmt.run(layout.x, layout.y, layout.w, layout.h, layout.i, (err : Error) => {
                     if (err) {
-                        return reject(err);
+                        return reject(err.message);
                     }
                 });
             });
 
-            stmt.finalize((err: any) => {
+            stmt.finalize((err : Error) => {
                 if (err) {
-                    return reject(err);
+                    return reject(err.message);
                 }
-                db.run('COMMIT', (commitErr: any) => {
+                db.run('COMMIT', (commitErr : Error) => {
                     if (commitErr) {
-                        return reject(commitErr);
+                        return reject(commitErr.message);
                     }
                     resolve();
                 });

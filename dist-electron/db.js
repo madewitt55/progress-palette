@@ -16,13 +16,12 @@ const getAllUsers = 'SELECT username, created_at FROM users';
 const isValidLogin = 'SELECT * FROM users WHERE username = ? AND password = ?';
 const getUserProjects = 'SELECT * FROM projects WHERE username = ?';
 const getProjectWidgets = 'SELECT * FROM widgets WHERE project_id = ?';
-const getWidgetLayout = `SELECT x, y, w, h FROM widget_layouts 
-WHERE widget_id = ?`;
+const getWidgetLayout = 'SELECT * FROM widget_layouts WHERE i = ?';
 const createWidget = 'INSERT INTO widgets(project_id, name) VALUES (?,?)';
-const createWidgetLayout = `INSERT INTO widget_layouts(widget_id, x, y, w, h) 
+const createWidgetLayout = `INSERT INTO widget_layouts(i, x, y, w, h) 
 VALUES (?,?,?,?,?)`;
 const updateWidgetLayout = `UPDATE widget_layouts SET x=?, y=?, w=?, h=? 
-WHERE widget_id=?`;
+WHERE i=?`;
 // Returns list of all users
 function GetUsers() {
     return new Promise((resolve, reject) => {
@@ -43,7 +42,7 @@ function ValidateLogin(username, password) {
     return new Promise((resolve, reject) => {
         db.all(isValidLogin, [username, password], (err, rows) => {
             if (err) {
-                return reject(err);
+                return reject(err.message);
             }
             else if (rows.length) {
                 const { password, ...sanitizedUser } = rows[0]; // Omit password
@@ -60,37 +59,42 @@ function GetProjects(username) {
     return new Promise((resolve, reject) => {
         db.all(getUserProjects, [username], (err, rows) => {
             if (err) {
-                return reject(err);
+                return reject(err.message);
             }
             resolve(rows);
         });
     });
 }
-// Returns all widgets belong to given project id
+// Returns an array of an array of widget and an array of layouts
 function GetWidgets(projectId) {
     return new Promise((resolve, reject) => {
         if (isNaN(projectId)) {
             return reject('Invalid projectId');
         }
         // Retrieve widgets
-        db.all(getProjectWidgets, [projectId.toString()], (err, widgetRows) => {
+        db.all(getProjectWidgets, [projectId], (err, widgetRows) => {
             if (err) {
-                return reject(err);
+                return reject(err.message);
             }
-            // Populate widgets with layout data (if found)
+            // If no widgets found, resolve empty
+            if (!widgetRows.length) {
+                return resolve({ widgets: [], layouts: [] });
+            }
+            const layouts = [];
+            // Fetch layouts for each widget
             const widgetPromises = widgetRows.map((widget) => {
-                return new Promise((resolveWidget) => {
+                return new Promise((resolveLayout) => {
                     db.all(getWidgetLayout, [widget.id], (err, layoutRows) => {
                         if (layoutRows.length) {
-                            widget.layout = layoutRows[0];
+                            layouts.push(layoutRows[0]); // Fill array
                         }
-                        resolveWidget(widget);
+                        resolveLayout(widget);
                     });
                 });
             });
-            // Await all promises before resolving widgets array
+            // Await all promises before resolving with both arrays
             Promise.all(widgetPromises).then((widgetsWithLayout) => {
-                resolve(widgetsWithLayout);
+                resolve({ widgets: widgetsWithLayout, layouts });
             }).catch(reject);
         });
     });
@@ -101,13 +105,13 @@ function CreateWidget(project_id, name, layout) {
         // Create widget row entry
         db.run(createWidget, [project_id, name], function (err) {
             if (err) {
-                return reject(err);
+                return reject(err.message);
             }
             // Create widget layout row with widget id
             const newWidgetId = this.lastID;
             db.run(createWidgetLayout, [newWidgetId, layout.x, layout.y, layout.w, layout.h], (err) => {
                 if (err) {
-                    return reject(err);
+                    return reject(err.message);
                 }
                 resolve(newWidgetId); // Resolve new id
             });
@@ -123,17 +127,17 @@ function UpdateAllWidgetLayouts(grid) {
             grid.forEach((layout) => {
                 stmt.run(layout.x, layout.y, layout.w, layout.h, layout.i, (err) => {
                     if (err) {
-                        return reject(err);
+                        return reject(err.message);
                     }
                 });
             });
             stmt.finalize((err) => {
                 if (err) {
-                    return reject(err);
+                    return reject(err.message);
                 }
                 db.run('COMMIT', (commitErr) => {
                     if (commitErr) {
-                        return reject(commitErr);
+                        return reject(commitErr.message);
                     }
                     resolve();
                 });
