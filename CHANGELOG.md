@@ -67,3 +67,22 @@ for simplicity
 - GridSystem saves new widgets and saves updated positions and sizes
 - Widget_layouts table now uses field i instead of widget_id to match imported
 Layout type
+
+## [0.2.3] - 2025-02-26
+
+### Added
+- Ability to set name of new widgets
+- Staged widget cannot be moved if name doesn't meet constraints
+- New widgets placed that push other widgets vertically out of bounds are snapped
+back to staging area
+
+### Fixed
+- Widgets being able to be placed vertically out of bounds
+
+### Changed
+- Widgets now display their name instead of their id
+- Widgets are no longer able to be placed below staging area; this fixes the 
+issue of widgets floating above the staging area
+
+### Removed
+- Unused useEffect import from Login
