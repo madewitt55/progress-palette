@@ -17,3 +17,13 @@
 .staging {
     border: 1px solid black;
 }
+
+.remove {
+    border: 1px solid red;
+}
+
+.react-grid-item.react-grid-placeholder {
+    background: rgba(0, 0, 0, 0) !important; /* Change or remove */
+    outline: none !important; /* Disable red shadow */
+    border: none !important;  /* Remove any border */
+}

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "re
 import GridLayout from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
-import './GridSystem.css'
+import './GridSystem.css';
 
 type props = {
     project : project | null;
@@ -11,15 +11,14 @@ type props = {
 function GridSystem(props : props, ref : any) {
     const NUM_COLS : number = 12;
     const NUM_ROWS : number = 10;
-    const NEW_WIDGET_SIZE : number = 2;
+    const NEW_WIDGET_SIZE : number = 1;
     const STAGING : GridLayout.Layout = {
         i: 'staging',
         x: 0,
         y: 0,
         w: NEW_WIDGET_SIZE,
         h: NEW_WIDGET_SIZE,
-        isResizable: false,
-        isDraggable: false
+        static: true // Staging area does not move
     }
     const STAGED : GridLayout.Layout = {
         i: 'staged',
@@ -28,7 +27,7 @@ function GridSystem(props : props, ref : any) {
         w: NEW_WIDGET_SIZE,
         h: NEW_WIDGET_SIZE,
         isResizable: false,
-        isDraggable: false
+        isDraggable: false // Undraggable until inputted name meets restraints
     }
     const [newWidgetName, setNewWidgetName] = useState<string>('');
     const [grid, setGrid] = useState<GridLayout.Layout[]>([]);
@@ -104,18 +103,24 @@ function GridSystem(props : props, ref : any) {
                         if (newWidgetId != -1 && props.project) {
                             stagedLayout.i = newWidgetId.toString(); // Update layout id
                             stagedLayout.isResizable = true;
+                            stagedLayout.isDraggable = true;
                             // Add new widget
                             setWidgets([...widgets, {
                                 id: newWidgetId,
                                 project_id: props.project.id,
                                 name: newWidgetName // Value of form on staged widget
                             }]);
+                            setNewWidgetName(''); // Reset name input
                             newGrid.push(STAGING); // Show staging area
+
+                            // Save new grid
+                            setGrid(newGrid);
+                            SaveGrid(newGrid);
+                            return;
                         }
                         else {
                             return; // Prevent grid state update on error
                         }
-                        setNewWidgetName(''); // Reset name input
                     });
                 }
             }
@@ -128,8 +133,11 @@ function GridSystem(props : props, ref : any) {
         }
 
         if (props.project) {
-            setGrid(newGrid);
-            SaveGrid(newGrid);
+            // If new widget was added, saving is handled after completion of async call
+            if (!(stagedLayout && stagedLayout.x >= NEW_WIDGET_SIZE)) {
+                setGrid(newGrid);
+                SaveGrid(newGrid);
+            }
         }
         // Project not selected
         else {
@@ -168,8 +176,30 @@ function GridSystem(props : props, ref : any) {
         window.api.UpdateAllWidgetLayouts(newGrid);
     }
 
+    // Deletes a widget and its layout from database, then refreshes grid
+    async function DeleteWidget(widgetId : number) {
+        const res : response = await window.api.DeleteWidget(widgetId);
+        if (res.err) {
+            alert(res.err);
+        }
+        else if (props.project){
+            FetchWidgets(props.project.id);
+        }
+    }
+
     function HandleWidgetNameChange(e : React.ChangeEvent<HTMLInputElement>) {
-        setNewWidgetName(e.target.value);
+        const newName = e.target.value;
+        setNewWidgetName(newName);
+        const newGrid : GridLayout.Layout[] = [...grid];
+        let stagedIndex : number = newGrid.findIndex((l : GridLayout.Layout) => l.i === 'staged');
+        if (stagedIndex != -1) {
+            // Enable dragging only if name meets constraints
+            newGrid[stagedIndex] = {
+                ...newGrid[stagedIndex],
+                isDraggable: newName.length >= 3 && newName.length <= 20
+            }
+            setGrid(newGrid);
+        }
     }
     
   // Expose to parent component (Home.tsx)
@@ -201,23 +231,10 @@ function GridSystem(props : props, ref : any) {
     >
         {grid.map((l : GridLayout.Layout) => {
             const widget = widgets.find((w : widget) => w.id.toString() === l.i);
-            if (l.i === 'staged') {
-                // Allow dragging if name meets constraints
-                if (newWidgetName.length >= 3 && newWidgetName.length <= 20) {
-                    l.isDraggable = true;
-                }
-                else {
-                    // SHOW POPUP
-                    l.isDraggable = false;
-                }
-            }
             return (
                 <div
                     key={l.i}
-                    data-grid={{
-                        ...l,
-                        static: l.i === 'staging',
-                    }}
+                    
                     className={
                         l.i === 'staging' || l.i === 'staged' ? l.i : 'widget'
                     }
@@ -229,10 +246,19 @@ function GridSystem(props : props, ref : any) {
                                 placeholder='Enter widget name'
                                 value={newWidgetName}
                                 onChange={HandleWidgetNameChange}
-                                onMouseDown={(e) => e.stopPropagation()} // Prevents dragging when clicking the input
+                                // Prevents dragging when clicking text input
+                                onMouseDown={(e) => e.stopPropagation()}
                             />
-                        ) : ''
-                    )}
+                        ) : '')
+                    }
+                    {widget ? (
+                        <button
+                            onClick={() => DeleteWidget(widget.id)}
+                            onMouseDown={(e) => e.stopPropagation()}
+                        >
+                            Delete
+                        </button>
+                    ) : ''}
                 </div>
             );
         })}

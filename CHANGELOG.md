@@ -86,3 +86,15 @@ issue of widgets floating above the staging area
 
 ### Removed
 - Unused useEffect import from Login
+
+## [0.2.4] - 2025-02-27
+
+### Added
+- Ability to delete widgets
+
+### Fixed
+- A few small bugs in the grid
+
+### Changed
+- New widget name constraint check now occurs in HandleWidgetNameChange rather
+than the map function inside GridLayout component

@@ -35,6 +35,8 @@ const createWidgetLayout : string = `INSERT INTO widget_layouts(i, x, y, w, h)
 VALUES (?,?,?,?,?)`;
 const updateWidgetLayout : string = `UPDATE widget_layouts SET x=?, y=?, w=?, h=? 
 WHERE i=?`;
+const deleteWidget : string = 'DELETE FROM widgets WHERE id=?';
+const deleteWidgetLayout : string = 'DELETE FROM widget_layouts WHERE i=?';
 
 // Returns list of all users
 export function GetUsers() : Promise<user[]> {
@@ -165,6 +167,20 @@ export function UpdateAllWidgetLayouts(grid : Layout[]) : Promise<void> {
                     resolve();
                 });
             });
+        });
+    });
+}
+
+export function DeleteWidget(widgetId : number) : Promise<void> {
+    return new Promise((resolve, reject) => {
+        db.run(deleteWidget, [widgetId], (err : Error) => {
+            if (err) {
+                reject(err);
+            }
+            db.run(deleteWidgetLayout, [widgetId], (err : Error) => {
+                reject(err);
+            });
+            resolve();
         });
     });
 }

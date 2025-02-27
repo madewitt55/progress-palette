@@ -6,6 +6,7 @@ exports.GetProjects = GetProjects;
 exports.GetWidgets = GetWidgets;
 exports.CreateWidget = CreateWidget;
 exports.UpdateAllWidgetLayouts = UpdateAllWidgetLayouts;
+exports.DeleteWidget = DeleteWidget;
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./dist-electron/progress-db.db', sqlite3.OPEN_READWRITE, (err) => {
     if (err)
@@ -22,6 +23,8 @@ const createWidgetLayout = `INSERT INTO widget_layouts(i, x, y, w, h)
 VALUES (?,?,?,?,?)`;
 const updateWidgetLayout = `UPDATE widget_layouts SET x=?, y=?, w=?, h=? 
 WHERE i=?`;
+const deleteWidget = 'DELETE FROM widgets WHERE id=?';
+const deleteWidgetLayout = 'DELETE FROM widget_layouts WHERE i=?';
 // Returns list of all users
 function GetUsers() {
     return new Promise((resolve, reject) => {
@@ -142,6 +145,19 @@ function UpdateAllWidgetLayouts(grid) {
                     resolve();
                 });
             });
+        });
+    });
+}
+function DeleteWidget(widgetId) {
+    return new Promise((resolve, reject) => {
+        db.run(deleteWidget, [widgetId], (err) => {
+            if (err) {
+                reject(err);
+            }
+            db.run(deleteWidgetLayout, [widgetId], (err) => {
+                reject(err);
+            });
+            resolve();
         });
     });
 }

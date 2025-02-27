@@ -19,8 +19,13 @@ const api = {
     CreateWidget: (projectId : number, name : string, layout : Layout) => {
         return ipcRenderer.invoke('create-widget', { projectId, name, layout });
     },
+    // Updates the layout of all widgets in a project
     UpdateAllWidgetLayouts: (grid : Layout[]) => {
         return ipcRenderer.invoke('update-all-widget-layouts', { grid });
+    },
+    // Deletes a widget given an id
+    DeleteWidget: (widgetId : number) => {
+        return ipcRenderer.invoke('delete-widget-by-id', { widgetId });
     }
 }
 contextBridge.exposeInMainWorld('api', api);

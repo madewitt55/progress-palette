@@ -22,7 +22,7 @@ declare global {
         name: string;
     };
     type widget = {
-        id: number | string;
+        id: number;
         project_id: number;
         name: string;
     }
@@ -36,6 +36,7 @@ declare global {
         GetWidgets: (projectId : number) => Promise<response>;
         CreateWidget: (projectId : number, name : string, layout : widget_layout) => Promise<response>;
         UpdateAllWidgetLayouts: (grid : widget_layout[]) => Promise<response>;
+        DeleteWidget: (widgetId : number) => Promise<response>;
     };
     };
 }

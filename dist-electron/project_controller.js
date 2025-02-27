@@ -62,7 +62,16 @@ electron_1.ipcMain.handle('create-widget', async (event, args) => {
 // Updates the position of the entire grid
 electron_1.ipcMain.handle('update-all-widget-layouts', async (event, args) => {
     try {
-        db.UpdateAllWidgetLayouts(args.grid);
+        await db.UpdateAllWidgetLayouts(args.grid);
+        return { data: null, err: null };
+    }
+    catch (err) {
+        return { data: null, err: err };
+    }
+});
+electron_1.ipcMain.handle('delete-widget-by-id', async (event, args) => {
+    try {
+        await db.DeleteWidget(args.widgetId);
         return { data: null, err: null };
     }
     catch (err) {

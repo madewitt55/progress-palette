@@ -18,8 +18,13 @@ const api = {
     CreateWidget: (projectId, name, layout) => {
         return electron_1.ipcRenderer.invoke('create-widget', { projectId, name, layout });
     },
+    // Updates the layout of all widgets in a project
     UpdateAllWidgetLayouts: (grid) => {
         return electron_1.ipcRenderer.invoke('update-all-widget-layouts', { grid });
+    },
+    // Deletes a widget given an id
+    DeleteWidget: (widgetId) => {
+        return electron_1.ipcRenderer.invoke('delete-widget-by-id', { widgetId });
     }
 };
 electron_1.contextBridge.exposeInMainWorld('api', api);
