@@ -98,3 +98,12 @@ issue of widgets floating above the staging area
 ### Changed
 - New widget name constraint check now occurs in HandleWidgetNameChange rather
 than the map function inside GridLayout component
+
+## [0.2.5] - 2025-02-28
+
+### Added
+- New widget name input maxLength constraint
+- Ability to unstage a new widget before creation
+
+### Changed
+- New widget button in Home toggles from 'new widget' to 'cancel'

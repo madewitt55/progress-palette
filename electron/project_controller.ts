@@ -53,7 +53,7 @@ ipcMain.handle('update-all-widget-layouts', async (event, args : {
         return { data: null, err: err };
     }
 });
-
+// Deletes a widget given id
 ipcMain.handle('delete-widget-by-id', async (event, args : {
     widgetId : number 
 }) : Promise<response> => {

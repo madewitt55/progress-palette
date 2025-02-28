@@ -148,6 +148,7 @@ function UpdateAllWidgetLayouts(grid) {
         });
     });
 }
+// Deletes a widget given its id
 function DeleteWidget(widgetId) {
     return new Promise((resolve, reject) => {
         db.run(deleteWidget, [widgetId], (err) => {

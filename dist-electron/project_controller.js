@@ -69,6 +69,7 @@ electron_1.ipcMain.handle('update-all-widget-layouts', async (event, args) => {
         return { data: null, err: err };
     }
 });
+// Deletes a widget given id
 electron_1.ipcMain.handle('delete-widget-by-id', async (event, args) => {
     try {
         await db.DeleteWidget(args.widgetId);

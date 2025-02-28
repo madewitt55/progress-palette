@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import GridLayout from "react-grid-layout";
+import './assets/bootstrap/bootstrap.min.css';
+import './assets/bootstrap/bootstrap.bundle.min'
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import './GridSystem.css';
 
 type props = {
     project : project | null;
+    setIsWidgetStaged: (bool : boolean) => void;
 }
 
 function GridSystem(props : props, ref : any) {
@@ -30,6 +33,8 @@ function GridSystem(props : props, ref : any) {
         isDraggable: false // Undraggable until inputted name meets restraints
     }
     const [newWidgetName, setNewWidgetName] = useState<string>('');
+    const [newWidgetType, setNewWidgetType] = useState<string>('');
+    const widgetTypes : string[] = ['todo'];
     const [grid, setGrid] = useState<GridLayout.Layout[]>([]);
     const [widgets, setWidgets] = useState<widget[]>([]);
     // Differentiates user grid interactions from grid state changes
@@ -111,6 +116,7 @@ function GridSystem(props : props, ref : any) {
                                 name: newWidgetName // Value of form on staged widget
                             }]);
                             setNewWidgetName(''); // Reset name input
+                            props.setIsWidgetStaged(false);
                             newGrid.push(STAGING); // Show staging area
 
                             // Save new grid
@@ -153,10 +159,20 @@ function GridSystem(props : props, ref : any) {
             return l.i === 'staged';
         }) !== -1;
         if (!isStaged) {
-            setWidgets(widgets.filter((w : widget) => w.id !== -1));
             setGrid([...grid.filter((l : GridLayout.Layout) => l.i !== 'staging'), STAGED]);
+            props.setIsWidgetStaged(true);
         }
-        
+    }
+    // Removes widget from staging area
+    function UnstageWidget() {
+        const isStaged : boolean = grid.findIndex((l : GridLayout.Layout) => {
+            return l.i === 'staged';
+        }) !== -1;
+        if (isStaged) {
+            setGrid([...grid.filter((l : GridLayout.Layout) => l.i !== 'staged'), STAGING]);
+            setNewWidgetName('');
+            props.setIsWidgetStaged(false);
+        }
     }
 
     // Creates new widget in database, returns widget id
@@ -187,9 +203,12 @@ function GridSystem(props : props, ref : any) {
         }
     }
 
+    // Handles the editing of new widget names
     function HandleWidgetNameChange(e : React.ChangeEvent<HTMLInputElement>) {
         const newName = e.target.value;
-        setNewWidgetName(newName);
+        if (newName.length < 20) {
+            setNewWidgetName(newName);
+        }
         const newGrid : GridLayout.Layout[] = [...grid];
         let stagedIndex : number = newGrid.findIndex((l : GridLayout.Layout) => l.i === 'staged');
         if (stagedIndex != -1) {
@@ -201,10 +220,16 @@ function GridSystem(props : props, ref : any) {
             setGrid(newGrid);
         }
     }
+
+    function HandleWidgetTypeChange(type : string) {
+        setNewWidgetType(type);
+    }
     
   // Expose to parent component (Home.tsx)
   useImperativeHandle(ref, () => ({
     StageWidget,
+    UnstageWidget,
+    grid
   }));
   
   return (
@@ -234,31 +259,63 @@ function GridSystem(props : props, ref : any) {
             return (
                 <div
                     key={l.i}
-                    
                     className={
                         l.i === 'staging' || l.i === 'staged' ? l.i : 'widget'
                     }
                 >
-                    {widget ? (<h3>{widget.name}</h3>) : (
-                        l.i === 'staged' ? (
-                            <input
-                                type='text'
-                                placeholder='Enter widget name'
-                                value={newWidgetName}
-                                onChange={HandleWidgetNameChange}
-                                // Prevents dragging when clicking text input
-                                onMouseDown={(e) => e.stopPropagation()}
-                            />
-                        ) : '')
-                    }
+
                     {widget ? (
+                        // Existing widgets
+                        <>
+                        <h3>{widget.name}</h3>
                         <button
                             onClick={() => DeleteWidget(widget.id)}
                             onMouseDown={(e) => e.stopPropagation()}
                         >
                             Delete
                         </button>
-                    ) : ''}
+                        </>
+                    ) : (
+                        // New staged widgets
+                        l.i === 'staged' ? (
+                            <>
+                            {/* Name input */}
+                            <input
+                                type='text'
+                                placeholder='Enter widget name'
+                                value={newWidgetName}
+                                maxLength={20}
+                                onChange={HandleWidgetNameChange}
+                                // Prevents dragging when clicking text input
+                                onMouseDown={(e) => e.stopPropagation()}
+                            />
+                            {/* Widget type dropdown */}
+                            <div className="dropdown">
+                                <button 
+                                    type="button" 
+                                    className="btn btn-primary dropdown-toggle" 
+                                    data-bs-toggle="dropdown"
+                                >
+                                </button>
+                                <ul className="dropdown-menu">
+                                    {widgetTypes.map((type: string) => (
+                                        <li key={type}>
+                                            <a className="dropdown-item" href="#" onClick={
+                                                () => HandleWidgetTypeChange(type)
+                                            }>
+                                                {type}
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            </>
+                            
+                        ) : (
+                            // Staging area
+                            ''
+                        ))
+                    }
                 </div>
             );
         })}

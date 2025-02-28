@@ -170,7 +170,7 @@ export function UpdateAllWidgetLayouts(grid : Layout[]) : Promise<void> {
         });
     });
 }
-
+// Deletes a widget given its id
 export function DeleteWidget(widgetId : number) : Promise<void> {
     return new Promise((resolve, reject) => {
         db.run(deleteWidget, [widgetId], (err : Error) => {
