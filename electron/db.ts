@@ -2,7 +2,7 @@ import type { Layout } from 'react-grid-layout';
 
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./dist-electron/progress-db.db', sqlite3.OPEN_READWRITE, (err : Error) => {
-    if (err) return console.error(err.message);
+    if (err) return console.error(err);
 });
 
 // TYPES
@@ -22,6 +22,11 @@ export type widget = {
     id: number;
     project_id: number;
     name: string;
+    widget_type: string;
+}
+export type widget_type = {
+    name: string;
+    description: string;
 }
 
 // QUERIES
@@ -37,13 +42,14 @@ const updateWidgetLayout : string = `UPDATE widget_layouts SET x=?, y=?, w=?, h=
 WHERE i=?`;
 const deleteWidget : string = 'DELETE FROM widgets WHERE id=?';
 const deleteWidgetLayout : string = 'DELETE FROM widget_layouts WHERE i=?';
+const getWidgetTypes : string = 'SELECT * FROM widget_types';
 
 // Returns list of all users
 export function GetUsers() : Promise<user[]> {
     return new Promise((resolve, reject) => {
         db.all(getAllUsers, [], (err : Error, rows : user[]) => {
             if (err) {
-                return reject(err.message);
+                return reject(err);
             }
             rows.map((user) => {
                 const { password, ...sanitizedUser } = user; // Omit password
@@ -58,7 +64,7 @@ export function ValidateLogin(username : string, password : string) : Promise<us
     return new Promise((resolve, reject) => {
         db.all(isValidLogin, [username, password], (err : Error, rows : user[]) => {
             if (err) {
-                return reject(err.message);
+                return reject(err);
             }
             else if (rows.length) {
                 const {password, ...sanitizedUser} = rows[0]; // Omit password
@@ -75,7 +81,7 @@ export function GetProjects(username : string) : Promise<project[]> {
     return new Promise((resolve, reject) => {
         db.all(getUserProjects, [username], (err : Error, rows : project[]) => {
             if (err) {
-                return reject(err.message);
+                return reject(err);
             }
             resolve(rows);
         });
@@ -91,7 +97,7 @@ export function GetWidgets(projectId: number): Promise<{widgets : widget[], layo
         // Retrieve widgets
         db.all(getProjectWidgets, [projectId], (err: Error, widgetRows: widget[]) => {
             if (err) {
-                return reject(err.message);
+                return reject(err);
             }
             
             // If no widgets found, resolve empty
@@ -126,14 +132,14 @@ export function CreateWidget(project_id : number, name : string, layout : Layout
         // Create widget row entry
         db.run(createWidget, [project_id, name], function (this: any, err : Error) {
             if (err) {
-                return reject(err.message);
+                return reject(err);
             }
 
             // Create widget layout row with widget id
             const newWidgetId = this.lastID;
             db.run(createWidgetLayout, [newWidgetId, layout.x, layout.y, layout.w, layout.h], (err : Error) => {
                 if (err) {
-                    return reject(err.message);
+                    return reject(err);
                 }
                 resolve(newWidgetId); // Resolve new id
             });
@@ -151,18 +157,18 @@ export function UpdateAllWidgetLayouts(grid : Layout[]) : Promise<void> {
             grid.forEach((layout : Layout) => {
                 stmt.run(layout.x, layout.y, layout.w, layout.h, layout.i, (err : Error) => {
                     if (err) {
-                        return reject(err.message);
+                        return reject(err);
                     }
                 });
             });
 
             stmt.finalize((err : Error) => {
                 if (err) {
-                    return reject(err.message);
+                    return reject(err);
                 }
                 db.run('COMMIT', (commitErr : Error) => {
                     if (commitErr) {
-                        return reject(commitErr.message);
+                        return reject(commitErr);
                     }
                     resolve();
                 });
@@ -173,15 +179,27 @@ export function UpdateAllWidgetLayouts(grid : Layout[]) : Promise<void> {
 // Deletes a widget given its id
 export function DeleteWidget(widgetId : number) : Promise<void> {
     return new Promise((resolve, reject) => {
+        db.run(deleteWidgetLayout, [widgetId], (err : Error) => {
+            if (err) {
+                reject(err);
+            }
+        });
         db.run(deleteWidget, [widgetId], (err : Error) => {
             if (err) {
                 reject(err);
             }
-            db.run(deleteWidgetLayout, [widgetId], (err : Error) => {
-                reject(err);
-            });
             resolve();
         });
     });
 }
-
+// Returns an array of all possible widget types
+export function GetWidgetTypes() : Promise<widget_type[]> {
+    return new Promise((resolve, reject) => {
+        db.all(getWidgetTypes, [], (rows : widget_type[], err : Error) => {
+            if (err) {
+                reject(err);
+            }
+            resolve(rows);
+        });
+    });
+}

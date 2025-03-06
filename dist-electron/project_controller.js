@@ -79,4 +79,14 @@ electron_1.ipcMain.handle('delete-widget-by-id', async (event, args) => {
         return { data: null, err: err };
     }
 });
+// Gets all widget types
+electron_1.ipcMain.handle('get-widget-types', async (event, args) => {
+    try {
+        const types = await db.GetWidgetTypes();
+        return { data: types, err: null };
+    }
+    catch (err) {
+        return { data: null, err: err };
+    }
+});
 //# sourceMappingURL=project_controller.js.map

@@ -27,3 +27,7 @@
     outline: none !important; /* Disable red shadow */
     border: none !important;  /* Remove any border */
 }
+
+.dropdown-btn {
+    width: 90%;
+}

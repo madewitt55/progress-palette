@@ -65,3 +65,13 @@ ipcMain.handle('delete-widget-by-id', async (event, args : {
         return { data: null, err: err };
     }
 });
+// Gets all widget types
+ipcMain.handle('get-widget-types', async (event, args : null) : Promise<response> => {
+    try {
+        const types : db.widget_type[] = await db.GetWidgetTypes();
+        return { data: types, err: null };
+    }
+    catch (err : any) {
+        return { data: null, err: err };
+    }
+});

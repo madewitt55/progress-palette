@@ -7,7 +7,6 @@ declare global {
         data : any;
         err : any;
     };
-    // Holds all fields of user table in database
     type user = {
         username: string;
         f_name: string;
@@ -25,18 +24,24 @@ declare global {
         id: number;
         project_id: number;
         name: string;
+        widget_type: string;
+    }
+    type widget_type = {
+        name: string;
+        description: string;
     }
     // See preload.ts for function definitions and documentation
     interface Window {
-    api: {
-        GetUsers: () => Promise<response>;
-        LoginUser: (username : string, password : string) => Promise<response>;
-        GetCurrentUser: () => Promise<response>;
-        GetProjects: (username : string) => Promise<response>;
-        GetWidgets: (projectId : number) => Promise<response>;
-        CreateWidget: (projectId : number, name : string, layout : widget_layout) => Promise<response>;
-        UpdateAllWidgetLayouts: (grid : widget_layout[]) => Promise<response>;
-        DeleteWidget: (widgetId : number) => Promise<response>;
-    };
+        api: {
+            GetUsers: () => Promise<response>;
+            LoginUser: (username : string, password : string) => Promise<response>;
+            GetCurrentUser: () => Promise<response>;
+            GetProjects: (username : string) => Promise<response>;
+            GetWidgets: (projectId : number) => Promise<response>;
+            CreateWidget: (projectId : number, name : string, layout : widget_layout) => Promise<response>;
+            UpdateAllWidgetLayouts: (grid : widget_layout[]) => Promise<response>;
+            DeleteWidget: (widgetId : number) => Promise<response>;
+            GetWidgetTypes: () => Promise<response>;
+        };
     };
 }

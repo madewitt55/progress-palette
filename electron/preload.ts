@@ -1,5 +1,4 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { UpdateAllWidgetLayouts } from './db';
 import type { Layout } from 'react-grid-layout';
 
 const api = {
@@ -26,6 +25,10 @@ const api = {
     // Deletes a widget given an id
     DeleteWidget: (widgetId : number) => {
         return ipcRenderer.invoke('delete-widget-by-id', { widgetId });
-    }
+    },
+    // Returns all widget types
+    GetWidgetTypes: () => {
+        return ipcRenderer.invoke('get-widget-types');
+    },
 }
 contextBridge.exposeInMainWorld('api', api);

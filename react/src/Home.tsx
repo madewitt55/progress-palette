@@ -37,6 +37,26 @@ function Home() {
         }
     }
 
+    // Allows GridSystem to create toasts
+    function CallToast(type : string, message : string) : void {
+        switch (type) {
+            case 'success':
+                toast.success(message);
+                break;
+            case 'error':
+                toast.error(message);
+                break;
+            case 'info':
+                toast.info(message);
+                break;
+            case 'warn':
+                toast.warn(message);
+                break;
+            default:
+                toast(message);
+        }
+    }
+
     // Initial mount
     useEffect(() => {
         // Fetches the currently logged in user
@@ -123,6 +143,7 @@ function Home() {
                 <GridSystem 
                     project={selectedProject} 
                     setIsWidgetStaged={setIsWidgetStaged}
+                    callToast={CallToast}
                     ref={gridRef} 
                 />
             </div>

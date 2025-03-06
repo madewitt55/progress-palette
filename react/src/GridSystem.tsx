@@ -9,11 +9,15 @@ import './GridSystem.css';
 type props = {
     project : project | null;
     setIsWidgetStaged: (bool : boolean) => void;
+    callToast: (type : string, message : string) => void;
 }
 
 function GridSystem(props : props, ref : any) {
-    const NUM_COLS : number = 12;
-    const NUM_ROWS : number = 10;
+    // Generic database error message
+    const DB_ERROR_MESSAGE : string = `Database error has occured. 
+    Contact support or try again later.`
+    const NUM_COLS : number = 8;
+    const NUM_ROWS : number = 8;
     const NEW_WIDGET_SIZE : number = 1;
     const STAGING : GridLayout.Layout = {
         i: 'staging',
@@ -33,10 +37,10 @@ function GridSystem(props : props, ref : any) {
         isDraggable: false // Undraggable until inputted name meets restraints
     }
     const [newWidgetName, setNewWidgetName] = useState<string>('');
-    const [newWidgetType, setNewWidgetType] = useState<string>('');
-    const widgetTypes : string[] = ['todo'];
+    const [newWidgetType, setNewWidgetType] = useState<string>('todo');
     const [grid, setGrid] = useState<GridLayout.Layout[]>([]);
     const [widgets, setWidgets] = useState<widget[]>([]);
+    const [widgetTypes, setWidgetTypes] = useState<widget_type[]>([]);
     // Differentiates user grid interactions from grid state changes
     const userInteracting = useRef(false);
 
@@ -51,10 +55,10 @@ function GridSystem(props : props, ref : any) {
     });
     useEffect(() => {
         function HandleWindowResize() : void {
-        setWindowSize({
-            width: window.innerWidth,
-            height: window.innerHeight
-        });
+            setWindowSize({
+                width: window.innerWidth,
+                height: window.innerHeight
+            });
         }
         window.addEventListener('resize', HandleWindowResize);
     }, []);
@@ -63,7 +67,7 @@ function GridSystem(props : props, ref : any) {
     async function FetchWidgets(projectId : number) : Promise<void> {
         const res : response = await window.api.GetWidgets(projectId);
         if (res.err) {
-            alert(res.err);
+            props.callToast('error', DB_ERROR_MESSAGE);
         }
         else {
             setWidgets(res.data.widgets);
@@ -81,27 +85,48 @@ function GridSystem(props : props, ref : any) {
     }
     // Fetch widgets on project change
     useEffect(() => {
+        async function FetchWidgetTypes() {
+
+        }
         if (props.project) {
             FetchWidgets(props.project.id);
         }
     }, [props.project]);
 
     function UpdateGrid(newGrid : GridLayout.Layout[]) : void {
-        // If any widget is vertically overflowing or placed in staging column
-        const isOutOfBounds : boolean = newGrid.findIndex((l : GridLayout.Layout) => {
-            return !isNaN(+l.i) && (l.y + l.h > NUM_ROWS || l.x < NEW_WIDGET_SIZE);
-        }) !== -1;
-        if (isOutOfBounds && props.project) {
-            setGrid([...grid.filter((l : GridLayout.Layout) => l.i === 'staged')]); // Force FetchWidgets to update grid state
-            console.log(grid);
-            FetchWidgets(props.project.id);
+        if (!props.project) {
             return;
         }
+        const projectId : number = props.project.id;
+
+        const isOutOfBounds : boolean = newGrid.some((l : GridLayout.Layout) => {
+            return !isNaN(+l.i) && (l.y + l.h > NUM_ROWS || l.x < NEW_WIDGET_SIZE);
+        });
+        // Invalid widget placement
+        if (isOutOfBounds) {
+            props.callToast('warn', 'Invalid widget placement. All widgets must remain inside the grid.');
+            // Reset grid to only include staged widget
+            setGrid([...grid.filter((l : GridLayout.Layout) => l.i === 'staged')]); 
+            FetchWidgets(projectId);
+            return;
+        }
+        
         // If widget is staged or was previously staged
-        const stagedLayout = newGrid.find((l : GridLayout.Layout) => l.i === 'staged');
+        const stagedLayout : GridLayout.Layout | undefined = newGrid.find((l : GridLayout.Layout) => l.i === 'staged');
         if (stagedLayout) {
             // Widget moved completely out of staging area
-            if (stagedLayout.x >= NEW_WIDGET_SIZE) {   
+            if (stagedLayout.x >= NEW_WIDGET_SIZE) {
+                // If widget of same name and type already exists in project
+                const isWidgetDuplicate : boolean = widgets.some((w : widget) => {
+                    return w.name === newWidgetName && w.widget_type === newWidgetType
+                });
+                if (isWidgetDuplicate) {
+                    props.callToast('warn', 'Two widgets must not have the same name and type.');
+                    // Reset grid to only include staged widget
+                    setGrid([...grid.filter((l : GridLayout.Layout) => l.i === 'staged')]); 
+                    FetchWidgets(projectId);
+                    return;
+                }  
                 // Create widget in database
                 if (props.project) {
                     SaveWidget(props.project.id, newWidgetName, stagedLayout).then((newWidgetId : number) => {
@@ -113,9 +138,11 @@ function GridSystem(props : props, ref : any) {
                             setWidgets([...widgets, {
                                 id: newWidgetId,
                                 project_id: props.project.id,
-                                name: newWidgetName // Value of form on staged widget
+                                name: newWidgetName, // Value of form on staged widget
+                                widget_type: newWidgetType
                             }]);
                             setNewWidgetName(''); // Reset name input
+                            setNewWidgetType('todo');
                             props.setIsWidgetStaged(false);
                             newGrid.push(STAGING); // Show staging area
 
@@ -147,7 +174,7 @@ function GridSystem(props : props, ref : any) {
         }
         // Project not selected
         else {
-            alert("Error: cannot find selected project.");
+            props.callToast('error', 'Selected project not found. Please try again.');
             setGrid([]);
             setWidgets([]);
         }
@@ -179,7 +206,7 @@ function GridSystem(props : props, ref : any) {
     async function SaveWidget(projectId : number, name : string, layout: GridLayout.Layout) : Promise<number> {
         const res : response = await window.api.CreateWidget(projectId, name, layout);
         if (res.err) {
-            alert(res.err);
+            props.callToast('error', DB_ERROR_MESSAGE);
             return -1;
         }
         else {
@@ -196,7 +223,7 @@ function GridSystem(props : props, ref : any) {
     async function DeleteWidget(widgetId : number) {
         const res : response = await window.api.DeleteWidget(widgetId);
         if (res.err) {
-            alert(res.err);
+            props.callToast('error', DB_ERROR_MESSAGE);
         }
         else if (props.project){
             FetchWidgets(props.project.id);
@@ -222,7 +249,9 @@ function GridSystem(props : props, ref : any) {
     }
 
     function HandleWidgetTypeChange(type : string) {
-        setNewWidgetType(type);
+        if (props.project) {
+            setNewWidgetType(type);
+        }
     }
     
   // Expose to parent component (Home.tsx)
@@ -289,21 +318,23 @@ function GridSystem(props : props, ref : any) {
                                 // Prevents dragging when clicking text input
                                 onMouseDown={(e) => e.stopPropagation()}
                             />
+                    
                             {/* Widget type dropdown */}
-                            <div className="dropdown">
+                            <div className="dropdown mt-3">
                                 <button 
                                     type="button" 
-                                    className="btn btn-primary dropdown-toggle" 
+                                    className="btn btn-primary dropdown-toggle dropdown-btn" 
                                     data-bs-toggle="dropdown"
+                                    onMouseDown={(e) => e.stopPropagation()}
                                 >
                                 </button>
                                 <ul className="dropdown-menu">
-                                    {widgetTypes.map((type: string) => (
-                                        <li key={type}>
+                                    {widgetTypes.map((type: widget_type) => (
+                                        <li key={type.name}>
                                             <a className="dropdown-item" href="#" onClick={
-                                                () => HandleWidgetTypeChange(type)
+                                                () => HandleWidgetTypeChange(type.name)
                                             }>
-                                                {type}
+                                                {type.name}
                                             </a>
                                         </li>
                                     ))}

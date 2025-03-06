@@ -25,7 +25,11 @@ const api = {
     // Deletes a widget given an id
     DeleteWidget: (widgetId) => {
         return electron_1.ipcRenderer.invoke('delete-widget-by-id', { widgetId });
-    }
+    },
+    // Returns all widget types
+    GetWidgetTypes: () => {
+        return electron_1.ipcRenderer.invoke('get-widget-types');
+    },
 };
 electron_1.contextBridge.exposeInMainWorld('api', api);
 //# sourceMappingURL=preload.js.map
