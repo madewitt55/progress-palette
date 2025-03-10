@@ -28,6 +28,12 @@ export type widget_type = {
     name: string;
     description: string;
 }
+export type widget_data = {
+    id: number;
+    widget_id: number;
+    name?: string;
+    is_completed?: number;
+}
 
 // QUERIES
 const getAllUsers : string = 'SELECT username, created_at FROM users';
@@ -43,6 +49,25 @@ WHERE i=?`;
 const deleteWidget : string = 'DELETE FROM widgets WHERE id=?';
 const deleteWidgetLayout : string = 'DELETE FROM widget_layouts WHERE i=?';
 const getWidgetTypes : string = 'SELECT * FROM widget_types';
+const getWidgetData = (widgetType : string) : string => `SELECT * FROM ${widgetType}_data WHERE widget_id = ?`;
+const getWidgetById : string = 'SELECT * FROM widgets WHERE id = ?';
+const updateWidgetData = (widgetType : string) : string => {
+    switch (widgetType) {
+        case 'todo':
+            return `UPDATE todo_data SET name=?, is_completed=? WHERE id=?`;
+        default:
+            return '';
+    }
+};
+const createWidgetData = (widgetType : string) : string => {
+    switch(widgetType) {
+        case 'todo':
+            return `INSERT INTO todo_data(widget_id, name, is_completed) VALUES
+            (?, ?, ?)`;
+        default:
+            return '';
+    }
+};
 
 // Returns list of all users
 export function GetUsers() : Promise<user[]> {
@@ -181,12 +206,12 @@ export function DeleteWidget(widgetId : number) : Promise<void> {
     return new Promise((resolve, reject) => {
         db.run(deleteWidgetLayout, [widgetId], (err : Error) => {
             if (err) {
-                reject(err);
+                return reject(err);
             }
         });
         db.run(deleteWidget, [widgetId], (err : Error) => {
             if (err) {
-                reject(err);
+                return reject(err);
             }
             resolve();
         });
@@ -195,11 +220,93 @@ export function DeleteWidget(widgetId : number) : Promise<void> {
 // Returns an array of all possible widget types
 export function GetWidgetTypes() : Promise<widget_type[]> {
     return new Promise((resolve, reject) => {
-        db.all(getWidgetTypes, [], (rows : widget_type[], err : Error) => {
+        db.all(getWidgetTypes, [], (err : Error, rows : widget_type[]) => {
             if (err) {
-                reject(err);
+                return reject(err);
             }
             resolve(rows);
         });
     });
 }
+export function GetWidget(widget_id : number) : Promise<widget> {
+    return new Promise((resolve, reject) => {
+        db.get(getWidgetById, [widget_id], (err : Error, row : widget) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(row);
+        });
+    });
+}
+//Returns all data of a widget given widget_id
+export function GetWidgetData(widget_id : number) : Promise<widget_data[]> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let widget = await GetWidget(widget_id);
+            if (!widget) {
+                return reject('Widget not found');
+            }
+
+            // Append _data to widget_type to get table name
+            db.all(getWidgetData(widget.widget_type), [widget_id], (err: Error, rows: widget_data[]) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(rows);
+            });
+        // Error thrown by GetWidget
+        }
+        catch (err) {
+            reject(err);
+        }
+    });
+
+}
+// Updates a widget data entry given all of its data
+export function UpdateWidgetData(data : widget_data) : Promise<void> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const widget : widget = await GetWidget(data.widget_id);
+            if (!widget) {
+                return reject('Widget not found');
+            }
+
+            // Filter widget id and shift id to end
+            let { widget_id, id, ...filteredData } = data;
+            const values : any[] = Object.values(filteredData);
+            values.push(id);
+
+            db.run(updateWidgetData(widget.widget_type), values, (err : Error) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve();
+            });
+        }
+        catch (err) {
+            reject(err);
+        }
+    });
+}
+// Creates a widget data entry and returns the new id
+export function CreateWidgetData(data : widget_data) : Promise<number> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const widget : widget = await GetWidget(data.widget_id);
+            if (!widget) {
+                return reject('Widget not found');
+            }
+
+            const values : any[] = Object.values(data);
+            db.run(createWidgetData(widget.widget_type), values, function (this : any, err : Error) {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(this.lastID);
+            });
+        }
+        catch (err) {
+            reject(err);
+        }
+    });
+};

@@ -110,3 +110,15 @@ than the map function inside GridLayout component
 - New widget button in Home toggles from 'new widget' to 'cancel'
 - Delete widget functionality now deletes layout row before widget row
 - Changed standard alerts to use react toastify
+
+## [0.3.0] - 2025-03-10
+
+### Added
+- Props function to GridSystem to be able to call toasts in Home
+- Todo_data table in database
+- Database and IPC functionality to get all data in a widget, create a data entry,
+and update a data entry
+- Widget component with basic todo functionality
+
+### Fixed
+- Issue of stacking toasts

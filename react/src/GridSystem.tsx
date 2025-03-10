@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import GridLayout from "react-grid-layout";
+import Widget from './Widget.tsx';
 import './assets/bootstrap/bootstrap.min.css';
 import './assets/bootstrap/bootstrap.bundle.min'
 import "react-grid-layout/css/styles.css";
@@ -86,10 +87,17 @@ function GridSystem(props : props, ref : any) {
     // Fetch widgets on project change
     useEffect(() => {
         async function FetchWidgetTypes() {
-
+            const res : response = await window.api.GetWidgetTypes();
+            if (res.err) {
+                props.callToast('error', 'Error retrieving widget types');
+            }
+            else {
+                setWidgetTypes(res.data);
+            }
         }
         if (props.project) {
             FetchWidgets(props.project.id);
+            FetchWidgetTypes();
         }
     }, [props.project]);
 
@@ -253,6 +261,10 @@ function GridSystem(props : props, ref : any) {
             setNewWidgetType(type);
         }
     }
+
+    function HandleWidgetLoadError() : void {
+
+    }
     
   // Expose to parent component (Home.tsx)
   useImperativeHandle(ref, () => ({
@@ -297,6 +309,10 @@ function GridSystem(props : props, ref : any) {
                         // Existing widgets
                         <>
                         <h3>{widget.name}</h3>
+                        <Widget
+                            widget={widget}
+                            widgetLoadError={HandleWidgetLoadError}
+                        />
                         <button
                             onClick={() => DeleteWidget(widget.id)}
                             onMouseDown={(e) => e.stopPropagation()}
@@ -336,6 +352,7 @@ function GridSystem(props : props, ref : any) {
                                             }>
                                                 {type.name}
                                             </a>
+                                            <p>{type.description}</p>
                                         </li>
                                     ))}
                                 </ul>

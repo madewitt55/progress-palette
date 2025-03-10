@@ -75,3 +75,33 @@ ipcMain.handle('get-widget-types', async (event, args : null) : Promise<response
         return { data: null, err: err };
     }
 });
+// Gets all widget data given id
+ipcMain.handle('get-widget-data', async (event, args : { widget_id : number}) : Promise<response> => {
+    try {
+        const widgetData : object[] = await db.GetWidgetData(args.widget_id);
+        return { data: widgetData, err: null };
+    }
+    catch (err : any) {
+        return { data: null, err }; 
+    }
+});
+// Updates a widget data entry
+ipcMain.handle('update-widget-data', async (event, args : { data : db.widget_data }) : Promise<response> => {
+    try {
+        await db.UpdateWidgetData(args.data);
+        return { data: null, err: null };
+    }
+    catch (err : any) {
+        return { data: null, err };
+    }
+}); 
+// Creates a widget data entry
+ipcMain.handle('create-widget-data', async (event, args : { data : db.widget_data }) : Promise<response> => {
+    try {
+        const newDataId : number = await db.CreateWidgetData(args.data);
+        return { data: newDataId, err: null };
+    }
+    catch (err : any) {
+        return { data: null, err };
+    }
+});

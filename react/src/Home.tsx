@@ -13,6 +13,7 @@ function Home() {
     const [projects, setProjects] = useState<project[]>([]);
     const [selectedProject, setSelectedProject] = useState<project | null>(null);
     const [isWidgetStaged, setIsWidgetStaged] = useState<boolean>(false);
+    const [toastId, setToastId] = useState<any>(0);
     const navigate = useNavigate();
     const gridRef = useRef<any>(null);
 
@@ -38,22 +39,23 @@ function Home() {
     }
 
     // Allows GridSystem to create toasts
-    function CallToast(type : string, message : string) : void {
+    function CallToast(type : string, message : string) {
+        toast.dismiss(toastId);
         switch (type) {
             case 'success':
-                toast.success(message);
+                setToastId(toast.success(message));
                 break;
             case 'error':
-                toast.error(message);
+                setToastId(toast.error(message));
                 break;
             case 'info':
-                toast.info(message);
+                setToastId(toast.info(message));
                 break;
             case 'warn':
-                toast.warn(message);
+                setToastId(toast.warn(message));
                 break;
             default:
-                toast(message);
+                setToastId(toast(message));
         }
     }
 
@@ -67,7 +69,7 @@ function Home() {
             }
             // No user logged in
             else {
-                toast.error("No user logged in");
+                CallToast('error', 'Error validating login credentials');
                 setTimeout(() => navigate('/'), 3000); // 3s delay
             }
         }
@@ -80,7 +82,7 @@ function Home() {
         async function FetchProjects(username : string) : Promise<void> {
             const res : response = await window.api.GetProjects(username);
             if (res.err) {
-                toast.error("Error retrieving projects");
+                CallToast('error', 'Error retrieving projects.');
             }
             else {
                 setProjects(res.data);

@@ -30,6 +30,15 @@ const api = {
     GetWidgetTypes: () => {
         return electron_1.ipcRenderer.invoke('get-widget-types');
     },
+    GetWidgetData: (widget_id) => {
+        return electron_1.ipcRenderer.invoke('get-widget-data', { widget_id });
+    },
+    UpdateWidgetData: (data) => {
+        return electron_1.ipcRenderer.invoke('update-widget-data', { data });
+    },
+    CreateWidgetData: (data) => {
+        return electron_1.ipcRenderer.invoke('create-widget-data', { data });
+    }
 };
 electron_1.contextBridge.exposeInMainWorld('api', api);
 //# sourceMappingURL=preload.js.map

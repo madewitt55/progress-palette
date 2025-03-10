@@ -89,4 +89,34 @@ electron_1.ipcMain.handle('get-widget-types', async (event, args) => {
         return { data: null, err: err };
     }
 });
+// Gets all widget data given id
+electron_1.ipcMain.handle('get-widget-data', async (event, args) => {
+    try {
+        const widgetData = await db.GetWidgetData(args.widget_id);
+        return { data: widgetData, err: null };
+    }
+    catch (err) {
+        return { data: null, err };
+    }
+});
+// Updates a widget data entry
+electron_1.ipcMain.handle('update-widget-data', async (event, args) => {
+    try {
+        await db.UpdateWidgetData(args.data);
+        return { data: null, err: null };
+    }
+    catch (err) {
+        return { data: null, err };
+    }
+});
+// Creates a widget data entry
+electron_1.ipcMain.handle('create-widget-data', async (event, args) => {
+    try {
+        const newDataId = await db.CreateWidgetData(args.data);
+        return { data: newDataId, err: null };
+    }
+    catch (err) {
+        return { data: null, err };
+    }
+});
 //# sourceMappingURL=project_controller.js.map

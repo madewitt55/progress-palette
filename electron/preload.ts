@@ -1,5 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { Layout } from 'react-grid-layout';
+export type widget_data = {
+    id: number;
+    widget_id: number;
+    name?: string;
+};
 
 const api = {
     // Returns all users
@@ -30,5 +35,14 @@ const api = {
     GetWidgetTypes: () => {
         return ipcRenderer.invoke('get-widget-types');
     },
+    GetWidgetData: (widget_id : number) => {
+        return ipcRenderer.invoke('get-widget-data', { widget_id });
+    },
+    UpdateWidgetData: (data : widget_data) => {
+        return ipcRenderer.invoke('update-widget-data', { data });
+    },
+    CreateWidgetData: (data : widget_data) => {
+        return ipcRenderer.invoke('create-widget-data', { data });
+    }
 }
 contextBridge.exposeInMainWorld('api', api);

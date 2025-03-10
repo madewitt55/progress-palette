@@ -8,6 +8,10 @@ exports.CreateWidget = CreateWidget;
 exports.UpdateAllWidgetLayouts = UpdateAllWidgetLayouts;
 exports.DeleteWidget = DeleteWidget;
 exports.GetWidgetTypes = GetWidgetTypes;
+exports.GetWidget = GetWidget;
+exports.GetWidgetData = GetWidgetData;
+exports.UpdateWidgetData = UpdateWidgetData;
+exports.CreateWidgetData = CreateWidgetData;
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./dist-electron/progress-db.db', sqlite3.OPEN_READWRITE, (err) => {
     if (err)
@@ -27,6 +31,25 @@ WHERE i=?`;
 const deleteWidget = 'DELETE FROM widgets WHERE id=?';
 const deleteWidgetLayout = 'DELETE FROM widget_layouts WHERE i=?';
 const getWidgetTypes = 'SELECT * FROM widget_types';
+const getWidgetData = (widgetType) => `SELECT * FROM ${widgetType}_data WHERE widget_id = ?`;
+const getWidgetById = 'SELECT * FROM widgets WHERE id = ?';
+const updateWidgetData = (widgetType) => {
+    switch (widgetType) {
+        case 'todo':
+            return `UPDATE todo_data SET name=?, is_completed=? WHERE id=?`;
+        default:
+            return '';
+    }
+};
+const createWidgetData = (widgetType) => {
+    switch (widgetType) {
+        case 'todo':
+            return `INSERT INTO todo_data(widget_id, name, is_completed) VALUES
+            (?, ?, ?)`;
+        default:
+            return '';
+    }
+};
 // Returns list of all users
 function GetUsers() {
     return new Promise((resolve, reject) => {
@@ -155,12 +178,12 @@ function DeleteWidget(widgetId) {
     return new Promise((resolve, reject) => {
         db.run(deleteWidgetLayout, [widgetId], (err) => {
             if (err) {
-                reject(err);
+                return reject(err);
             }
         });
         db.run(deleteWidget, [widgetId], (err) => {
             if (err) {
-                reject(err);
+                return reject(err);
             }
             resolve();
         });
@@ -169,12 +192,90 @@ function DeleteWidget(widgetId) {
 // Returns an array of all possible widget types
 function GetWidgetTypes() {
     return new Promise((resolve, reject) => {
-        db.all(getWidgetTypes, [], (rows, err) => {
+        db.all(getWidgetTypes, [], (err, rows) => {
             if (err) {
-                reject(err);
+                return reject(err);
             }
             resolve(rows);
         });
     });
 }
+function GetWidget(widget_id) {
+    return new Promise((resolve, reject) => {
+        db.get(getWidgetById, [widget_id], (err, row) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(row);
+        });
+    });
+}
+//Returns all data of a widget given widget_id
+function GetWidgetData(widget_id) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let widget = await GetWidget(widget_id);
+            if (!widget) {
+                return reject('Widget not found');
+            }
+            // Append _data to widget_type to get table name
+            db.all(getWidgetData(widget.widget_type), [widget_id], (err, rows) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(rows);
+            });
+            // Error thrown by GetWidget
+        }
+        catch (err) {
+            reject(err);
+        }
+    });
+}
+// Updates a widget data entry given all of its data
+function UpdateWidgetData(data) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const widget = await GetWidget(data.widget_id);
+            if (!widget) {
+                return reject('Widget not found');
+            }
+            // Filter widget id and shift id to end
+            let { widget_id, id, ...filteredData } = data;
+            const values = Object.values(filteredData);
+            values.push(id);
+            db.run(updateWidgetData(widget.widget_type), values, (err) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve();
+            });
+        }
+        catch (err) {
+            reject(err);
+        }
+    });
+}
+// Creates a widget data entry and returns the new id
+function CreateWidgetData(data) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const widget = await GetWidget(data.widget_id);
+            if (!widget) {
+                return reject('Widget not found');
+            }
+            const values = Object.values(data);
+            db.run(createWidgetData(widget.widget_type), values, function (err) {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(this.lastID);
+            });
+        }
+        catch (err) {
+            reject(err);
+        }
+    });
+}
+;
 //# sourceMappingURL=db.js.map

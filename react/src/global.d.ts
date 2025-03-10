@@ -25,11 +25,17 @@ declare global {
         project_id: number;
         name: string;
         widget_type: string;
-    }
+    };
     type widget_type = {
         name: string;
         description: string;
-    }
+    };
+    type widget_data = {
+        id?: number;
+        widget_id: number;
+        name?: string;
+        is_completed?: number;
+    };
     // See preload.ts for function definitions and documentation
     interface Window {
         api: {
@@ -42,6 +48,9 @@ declare global {
             UpdateAllWidgetLayouts: (grid : widget_layout[]) => Promise<response>;
             DeleteWidget: (widgetId : number) => Promise<response>;
             GetWidgetTypes: () => Promise<response>;
+            GetWidgetData: (widget_id : number) => Promise<response>;
+            UpdateWidgetData: (data : widget_data) => Promise<response>;
+            CreateWidgetData: (data : widget_data) => Promise<response>;
         };
     };
 }
