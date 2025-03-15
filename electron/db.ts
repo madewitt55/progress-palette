@@ -68,6 +68,22 @@ const createWidgetData = (widgetType : string) : string => {
             return '';
     }
 };
+const deleteWidgetData = (widgetType : string) : string => {
+    switch(widgetType) {
+        case 'todo':
+            return 'DELETE FROM todo_data WHERE id=?';
+        default:
+            return '';
+    }
+};
+const deleteAllWidgetData = (widgetType : string) : string => {
+    switch(widgetType) {
+        case 'todo':
+            return 'DELETE FROM todo_data WHERE widget_id=?';
+        default:
+            return '';
+    }
+};
 
 // Returns list of all users
 export function GetUsers() : Promise<user[]> {
@@ -203,7 +219,11 @@ export function UpdateAllWidgetLayouts(grid : Layout[]) : Promise<void> {
 }
 // Deletes a widget given its id
 export function DeleteWidget(widgetId : number) : Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+        const widget : widget = await GetWidget(widgetId);
+        if (!widget) {
+            return reject('Widget not found.');
+        }
         db.run(deleteWidgetLayout, [widgetId], (err : Error) => {
             if (err) {
                 return reject(err);
@@ -212,6 +232,12 @@ export function DeleteWidget(widgetId : number) : Promise<void> {
         db.run(deleteWidget, [widgetId], (err : Error) => {
             if (err) {
                 return reject(err);
+            }
+            resolve();
+        });
+        db.run(deleteAllWidgetData(widget.widget_type), [widgetId], (err : Error) => {
+            if (err) {
+                reject(err);
             }
             resolve();
         });
@@ -310,3 +336,25 @@ export function CreateWidgetData(data : widget_data) : Promise<number> {
         }
     });
 };
+
+export function DeleteWidgetData(data_id : number, widget_id : number) : Promise<void> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const widget : widget = await GetWidget(widget_id);
+            if (!widget) {
+                return reject('Widget not found');
+            }
+
+            db.run(deleteWidgetData(widget.widget_type), data_id, (err : Error) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve();
+            });
+
+        }
+        catch (err) {
+            reject(err);
+        }
+    });
+}

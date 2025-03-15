@@ -122,3 +122,14 @@ and update a data entry
 
 ### Fixed
 - Issue of stacking toasts
+
+## [0.3.1] - 
+
+### Added
+- Basic modal used to add widget data entries
+- Basic modal to edit widget data entries
+- Delete widget data entry functionality
+
+### Changed
+- IPC delete widget functionality to delete any widget data entries along with
+the widget and its layout

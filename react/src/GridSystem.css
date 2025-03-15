@@ -22,6 +22,7 @@
     border: 1px solid red;
 }
 
+/* Removes shadow when dragging widgets */
 .react-grid-item.react-grid-placeholder {
     background: rgba(0, 0, 0, 0) !important; /* Change or remove */
     outline: none !important; /* Disable red shadow */

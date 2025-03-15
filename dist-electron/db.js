@@ -12,6 +12,7 @@ exports.GetWidget = GetWidget;
 exports.GetWidgetData = GetWidgetData;
 exports.UpdateWidgetData = UpdateWidgetData;
 exports.CreateWidgetData = CreateWidgetData;
+exports.DeleteWidgetData = DeleteWidgetData;
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./dist-electron/progress-db.db', sqlite3.OPEN_READWRITE, (err) => {
     if (err)
@@ -46,6 +47,22 @@ const createWidgetData = (widgetType) => {
         case 'todo':
             return `INSERT INTO todo_data(widget_id, name, is_completed) VALUES
             (?, ?, ?)`;
+        default:
+            return '';
+    }
+};
+const deleteWidgetData = (widgetType) => {
+    switch (widgetType) {
+        case 'todo':
+            return 'DELETE FROM todo_data WHERE id=?';
+        default:
+            return '';
+    }
+};
+const deleteAllWidgetData = (widgetType) => {
+    switch (widgetType) {
+        case 'todo':
+            return 'DELETE FROM todo_data WHERE widget_id=?';
         default:
             return '';
     }
@@ -175,7 +192,11 @@ function UpdateAllWidgetLayouts(grid) {
 }
 // Deletes a widget given its id
 function DeleteWidget(widgetId) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+        const widget = await GetWidget(widgetId);
+        if (!widget) {
+            return reject('Widget not found.');
+        }
         db.run(deleteWidgetLayout, [widgetId], (err) => {
             if (err) {
                 return reject(err);
@@ -184,6 +205,12 @@ function DeleteWidget(widgetId) {
         db.run(deleteWidget, [widgetId], (err) => {
             if (err) {
                 return reject(err);
+            }
+            resolve();
+        });
+        db.run(deleteAllWidgetData(widget.widget_type), [widgetId], (err) => {
+            if (err) {
+                reject(err);
             }
             resolve();
         });
@@ -278,4 +305,23 @@ function CreateWidgetData(data) {
     });
 }
 ;
+function DeleteWidgetData(data_id, widget_id) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const widget = await GetWidget(widget_id);
+            if (!widget) {
+                return reject('Widget not found');
+            }
+            db.run(deleteWidgetData(widget.widget_type), data_id, (err) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve();
+            });
+        }
+        catch (err) {
+            reject(err);
+        }
+    });
+}
 //# sourceMappingURL=db.js.map

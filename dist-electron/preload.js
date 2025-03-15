@@ -38,6 +38,9 @@ const api = {
     },
     CreateWidgetData: (data) => {
         return electron_1.ipcRenderer.invoke('create-widget-data', { data });
+    },
+    DeleteWidgetData: (data_id, widget_id) => {
+        return electron_1.ipcRenderer.invoke('delete-widget-data', { data_id, widget_id });
     }
 };
 electron_1.contextBridge.exposeInMainWorld('api', api);

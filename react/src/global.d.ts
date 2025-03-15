@@ -51,6 +51,7 @@ declare global {
             GetWidgetData: (widget_id : number) => Promise<response>;
             UpdateWidgetData: (data : widget_data) => Promise<response>;
             CreateWidgetData: (data : widget_data) => Promise<response>;
+            DeleteWidgetData: (data_id : number, widget_id : number) => Promise<response>;
         };
     };
 }

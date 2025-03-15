@@ -43,6 +43,9 @@ const api = {
     },
     CreateWidgetData: (data : widget_data) => {
         return ipcRenderer.invoke('create-widget-data', { data });
+    },
+    DeleteWidgetData: (data_id : number, widget_id: number) => {
+        return ipcRenderer.invoke('delete-widget-data', { data_id, widget_id});
     }
 }
 contextBridge.exposeInMainWorld('api', api);

@@ -105,3 +105,13 @@ ipcMain.handle('create-widget-data', async (event, args : { data : db.widget_dat
         return { data: null, err };
     }
 });
+// Deletes a widget data entry
+ipcMain.handle('delete-widget-data', async (event, args : {data_id : number, widget_id : number}) : Promise<response> => {
+    try {
+        await db.DeleteWidgetData(args.data_id, args.widget_id);
+        return { data: null, err: null };
+    }
+    catch (err : any) {
+        return { data: null, err };
+    }
+});

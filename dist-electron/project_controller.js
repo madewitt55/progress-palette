@@ -119,4 +119,14 @@ electron_1.ipcMain.handle('create-widget-data', async (event, args) => {
         return { data: null, err };
     }
 });
+// Deletes a widget data entry
+electron_1.ipcMain.handle('delete-widget-data', async (event, args) => {
+    try {
+        await db.DeleteWidgetData(args.data_id, args.widget_id);
+        return { data: null, err: null };
+    }
+    catch (err) {
+        return { data: null, err };
+    }
+});
 //# sourceMappingURL=project_controller.js.map
