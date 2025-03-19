@@ -99,11 +99,34 @@ electron_1.ipcMain.handle('get-widget-data', async (event, args) => {
         return { data: null, err };
     }
 });
+// Compress widget data object into an array of its values to be submitted to database
+function DataToArray(data, widget_type) {
+    let arr = [];
+    switch (widget_type) {
+        case 'todo':
+            arr = [data.name, data.is_completed];
+            break;
+    }
+    return arr;
+}
 // Updates a widget data entry
 electron_1.ipcMain.handle('update-widget-data', async (event, args) => {
     try {
-        await db.UpdateWidgetData(args.data);
-        return { data: null, err: null };
+        const widget = await db.GetWidget(args.data.widget_id);
+        if (widget) {
+            const arr = DataToArray(args.data, widget.widget_type);
+            if (arr.length && args.data?.id) {
+                arr.push(args.data.id); // Append id to end
+                await db.UpdateWidgetData(arr, widget.widget_type);
+                return { data: null, err: null };
+            }
+            else {
+                throw new Error('Insufficient data recieved to update data entry.');
+            }
+        }
+        else {
+            throw new Error('Widget not found.');
+        }
     }
     catch (err) {
         return { data: null, err };
@@ -112,8 +135,16 @@ electron_1.ipcMain.handle('update-widget-data', async (event, args) => {
 // Creates a widget data entry
 electron_1.ipcMain.handle('create-widget-data', async (event, args) => {
     try {
-        const newDataId = await db.CreateWidgetData(args.data);
-        return { data: newDataId, err: null };
+        const widget = await db.GetWidget(args.data.widget_id);
+        if (widget) {
+            const arr = DataToArray(args.data, widget.widget_type);
+            arr.unshift(args.data.widget_id);
+            const newDataId = await db.CreateWidgetData(arr, widget.widget_type);
+            return { data: newDataId, err: null };
+        }
+        else {
+            throw new Error('Widget not found.');
+        }
     }
     catch (err) {
         return { data: null, err };

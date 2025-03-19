@@ -260,48 +260,25 @@ function GetWidgetData(widget_id) {
     });
 }
 // Updates a widget data entry given all of its data
-function UpdateWidgetData(data) {
+function UpdateWidgetData(data, widget_type) {
     return new Promise(async (resolve, reject) => {
-        try {
-            const widget = await GetWidget(data.widget_id);
-            if (!widget) {
-                return reject('Widget not found');
+        db.run(updateWidgetData(widget_type), data, (err) => {
+            if (err) {
+                return reject(err);
             }
-            // Filter widget id and shift id to end
-            let { widget_id, id, ...filteredData } = data;
-            const values = Object.values(filteredData);
-            values.push(id);
-            db.run(updateWidgetData(widget.widget_type), values, (err) => {
-                if (err) {
-                    return reject(err);
-                }
-                resolve();
-            });
-        }
-        catch (err) {
-            reject(err);
-        }
+            resolve();
+        });
     });
 }
 // Creates a widget data entry and returns the new id
-function CreateWidgetData(data) {
+function CreateWidgetData(data, widget_type) {
     return new Promise(async (resolve, reject) => {
-        try {
-            const widget = await GetWidget(data.widget_id);
-            if (!widget) {
-                return reject('Widget not found');
+        db.run(createWidgetData(widget_type), data, function (err) {
+            if (err) {
+                return reject(err);
             }
-            const values = Object.values(data);
-            db.run(createWidgetData(widget.widget_type), values, function (err) {
-                if (err) {
-                    return reject(err);
-                }
-                resolve(this.lastID);
-            });
-        }
-        catch (err) {
-            reject(err);
-        }
+            resolve(this.lastID);
+        });
     });
 }
 ;

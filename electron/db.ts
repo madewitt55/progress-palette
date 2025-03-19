@@ -289,51 +289,26 @@ export function GetWidgetData(widget_id : number) : Promise<widget_data[]> {
 
 }
 // Updates a widget data entry given all of its data
-export function UpdateWidgetData(data : widget_data) : Promise<void> {
+export function UpdateWidgetData(data : any[], widget_type : string) : Promise<void> {
     return new Promise(async (resolve, reject) => {
-        try {
-            const widget : widget = await GetWidget(data.widget_id);
-            if (!widget) {
-                return reject('Widget not found');
+
+        db.run(updateWidgetData(widget_type), data, (err : Error) => {
+            if (err) {
+                return reject(err);
             }
-
-            // Filter widget id and shift id to end
-            let { widget_id, id, ...filteredData } = data;
-            const values : any[] = Object.values(filteredData);
-            values.push(id);
-
-            db.run(updateWidgetData(widget.widget_type), values, (err : Error) => {
-                if (err) {
-                    return reject(err);
-                }
-                resolve();
-            });
-        }
-        catch (err) {
-            reject(err);
-        }
+            resolve();
+        });
     });
 }
 // Creates a widget data entry and returns the new id
-export function CreateWidgetData(data : widget_data) : Promise<number> {
+export function CreateWidgetData(data : any[], widget_type : string) : Promise<number> {
     return new Promise(async (resolve, reject) => {
-        try {
-            const widget : widget = await GetWidget(data.widget_id);
-            if (!widget) {
-                return reject('Widget not found');
+        db.run(createWidgetData(widget_type), data, function (this : any, err : Error) {
+            if (err) {
+                return reject(err);
             }
-
-            const values : any[] = Object.values(data);
-            db.run(createWidgetData(widget.widget_type), values, function (this : any, err : Error) {
-                if (err) {
-                    return reject(err);
-                }
-                resolve(this.lastID);
-            });
-        }
-        catch (err) {
-            reject(err);
-        }
+            resolve(this.lastID);
+        });
     });
 };
 

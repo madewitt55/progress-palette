@@ -321,24 +321,30 @@ function GridSystem(props : props, ref : any) {
                 <div
                     key={l.i}
                     className={
-                        l.i === 'staging' || l.i === 'staged' ? l.i : 'widget'
+                        `card ${l.i === 'staging' || l.i === 'staged' ? l.i : 'card widget'}`
                     }
                 >
 
                     {widget ? (
                         // Existing widgets
                         <>
-                        <h3>{widget.name}</h3>
-                        <Widget
-                            widget={widget}
-                            widgetLoadError={HandleWidgetLoadError}
-                        />
-                        <button
-                            onClick={() => DeleteWidget(widget.id)}
-                            onMouseDown={(e) => e.stopPropagation()}
-                        >
-                            Delete
-                        </button>
+                        <div className='card-header'>
+                            <h3>{widget.name}</h3>
+                        </div>
+                        <div className='card-body'>
+                            <Widget
+                                widget={widget}
+                            />
+                        </div>
+                        <div className='card-footer'>
+                            <button
+                                onClick={() => DeleteWidget(widget.id)}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                className='btn btn-danger'
+                            >
+                                Delete
+                            </button>
+                        </div>
                         </>
                     ) : (
                         // New staged widgets

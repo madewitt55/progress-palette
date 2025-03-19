@@ -10,23 +10,20 @@
 }
 
 .staged {
-    background-color: gray;
+    background-color: #5b6477;
     color: white;
 }
 
 .staging {
+    background-color: #c3dbdb;
     border: 1px solid black;
-}
-
-.remove {
-    border: 1px solid red;
 }
 
 /* Removes shadow when dragging widgets */
 .react-grid-item.react-grid-placeholder {
-    background: rgba(0, 0, 0, 0) !important; /* Change or remove */
-    outline: none !important; /* Disable red shadow */
-    border: none !important;  /* Remove any border */
+    background: rgba(0, 0, 0, 0) !important; 
+    outline: none !important; 
+    border: none !important;  
 }
 
 .dropdown-btn {

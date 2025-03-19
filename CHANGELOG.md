@@ -123,7 +123,7 @@ and update a data entry
 ### Fixed
 - Issue of stacking toasts
 
-## [0.3.1] - 
+## [0.3.1] - 2025-03-14
 
 ### Added
 - Basic modal used to add widget data entries
@@ -133,3 +133,16 @@ and update a data entry
 ### Changed
 - IPC delete widget functionality to delete any widget data entries along with
 the widget and its layout
+
+## [0.4.0] - 2025-03-19
+
+### Changed
+- Major restructure to the frontend
+- Moved todo list rendering outside of Widget, instead making Widget its parent.
+Widget handles API logic and the create and edit modal. Todo is passed only the 
+data it needs to display and functions from Widget to call
+- Changed the parameters of create and edit widget data in the main process
+
+### NOTE
+- As of now, editing widget data through the modal creates a new widget entry. The 
+data to be edited is not being passed correctly
