@@ -1,0 +1,11 @@
+.todo-item {
+    font-size: 120%;
+}
+
+.completed {
+    text-decoration: line-through;
+}
+
+.incomplete {
+    text-decoration: none;
+}

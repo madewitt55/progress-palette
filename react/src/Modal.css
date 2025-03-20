@@ -8,14 +8,28 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    pointer-events: auto;
+    pointer-events: all;
+    z-index: 1040;
 }
 
-.modal-body {
+.modal-view {
+    z-index: 1050;
+    color: #2c2c66;
     background-color: white;
-    height: 50vh;
     width: 50vw;
     max-width: 50vw;
     pointer-events: auto;
     position: relative;
 }
+
+.modal-view input, .modal-view input:focus {
+    text-align: center;
+    width: 70%;
+    border-radius: 0;
+    background-color: #8aafdb;
+}
+
+.name-input {
+    margin-left: 20%;
+}
+

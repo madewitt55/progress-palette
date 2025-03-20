@@ -86,11 +86,17 @@ ipcMain.handle('get-widget-data', async (event, args : { widget_id : number}) : 
     }
 });
 
-// Compress widget data object into an array of its values to be submitted to database
+// Compresses widget data object into an array of its values to be submitted to database
 function DataToArray(data : db.widget_data, widget_type : string) : any[] {
     let arr : any[] = [];
     switch (widget_type) {
         case 'todo':
+            if (data.name && (data.name.length > 20 || data.name.length < 3)) {
+                throw new Error('Task name must be between 3 and 20 characters');
+            }
+            else if (data.is_completed != 0 && data.is_completed != 1) {
+                throw new Error('Completion status of task must be a binary value.');
+            }
             arr = [data.name, data.is_completed];
             break;
     }

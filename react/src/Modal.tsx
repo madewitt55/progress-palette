@@ -17,14 +17,16 @@ export default function Modal(props : props) {
         name: '',
         is_completed: 0
     }
-    console.log(props.data);
     const [formData, setFormData] = useState<widget_data>(DEFAULT_DATA);
 
     useEffect(() => {
         if (props.data) {
             setFormData(props.data);
         }
-    }, [props.data])
+        else {
+            setFormData(DEFAULT_DATA);
+        }
+    }, [props.data]);
 
     function HandleFormChange(e : React.ChangeEvent<any>) : void {
         setFormData({
@@ -32,7 +34,8 @@ export default function Modal(props : props) {
             [e.target.name]: e.target.value
         });
     }
-    function SubmitForm() : void {
+    function SubmitForm(e: React.FormEvent<HTMLFormElement>) : void {
+        e.preventDefault();
         // If data is passed to props, data is being edited
         if (props.data) {
             props.updateData(formData);
@@ -46,21 +49,58 @@ export default function Modal(props : props) {
     }
     const CREATE_TODO : React.ReactNode = (
         <>
-        <label>Task name</label>
-        <input
-            type="text"
-            name="name"
-            value={formData?.name}
-            onChange={(e) => HandleFormChange(e)}
-            placeholder="Enter task name"
-        />
-        <br/>
-        <button
-            onClick={() => {SubmitForm()}}
-        >
-            Create
-        </button>
-        <br/>
+            <div className='card'>
+                <div className='card-header'>
+                    <h4 className='modal-title'>Create Task</h4>
+                </div>
+                <div className='card-body'>
+                    <form
+                        className={(formData?.name ?? '').length > 3 ? 'was-validated' : 'needs-validation'}
+                        noValidate
+                        onSubmit={(e) => {SubmitForm(e)}}
+                    >
+                            <div className='name-input'>
+                                <label className='form-label mb-0'>Task name</label>
+                                <input
+                                    className={`form-control mb-1  
+                                        ${(formData?.name ?? '').length < 3 ?
+                                            'is-invalid' : 'is-valid'
+                                        }`
+                                    }
+                                    type="text"
+                                    name="name"
+                                    value={formData?.name}
+                                    minLength={3}
+                                    maxLength={20}
+                                    onChange={(e) => HandleFormChange(e)}
+                                    placeholder="Task name"
+                                    required
+                                />
+                                <div className='invalid-feedback'>Name must be between 3 and 20 characters</div>
+                            </div>
+                        <div className='card-footer mt-4'>
+                            <div className='btn-group mx-auto'>
+                                <button
+                                    className='btn btn-primary'
+                                    type='submit' 
+                                    disabled={(formData?.name ?? '').length < 3}
+                                >
+                                    Create
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        props.closeModal();
+                                        setFormData(DEFAULT_DATA);
+                                    }}
+                                    className='btn btn-danger'
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </>
     );
     const EDIT_TODO : React.ReactNode = (
@@ -69,7 +109,7 @@ export default function Modal(props : props) {
         <input
             type="text"
             name="name"
-            value={props.data?.name}
+            value={formData.name}
             onChange={(e) => HandleFormChange(e)}
             placeholder="Edit task name"
         />
@@ -109,12 +149,8 @@ export default function Modal(props : props) {
             <div
             className='modal-container'
             >
-                <div className='modal-body'>
+                <div className='modal-view'>
                     {LoadForm()}
-                    <button onClick={() => {
-                        setFormData(DEFAULT_DATA);
-                        props.closeModal();
-                    }}>Close</button>
                 </div>
             </div>,
             document.body

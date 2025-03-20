@@ -3,6 +3,7 @@ import './assets/bootstrap/bootstrap.min.css';
 import './assets/bootstrap/bootstrap.bundle.min'
 import './index.css';
 import './Widget.tsx';
+import './Todo.css';
 
 type props = {
     data : widget_data[];
@@ -31,16 +32,19 @@ function Todo(props : props) {
                     <li
                         key={data.id}
                     >
-                        <label>{data.name}</label>
-                        <input 
-                            type="checkbox" 
-                            checked={Boolean(data.is_completed)} 
+                        <h4
+                            className={`todo-item ${data.is_completed ? 'completed' : 'incomplete'}`}
                             onMouseDown={(e) => e.stopPropagation()}
-                            onChange={(e) => props.updateData({
-                                ...data,
-                                is_completed: Number(e.target.checked)
-                            })}
-                        />
+                            onClick={() => {
+                                props.updateData({
+                                    ...data,
+                                    is_completed: data.is_completed! ^ 1
+                                })
+                            }}
+                        >
+                            {data.name}
+                        </h4>
+                        
                         <button
                             onClick={() => props.deleteData(data)}
                             onMouseDown={(e) => e.stopPropagation()}
@@ -52,7 +56,6 @@ function Todo(props : props) {
                             onMouseDown={(e) => e.stopPropagation()}
                             onClick={() => {
                                 props.toggleModal(true, data);
-                                props.toggleModal(true);
                             }}
                             className='btn btn-warning'
                         >

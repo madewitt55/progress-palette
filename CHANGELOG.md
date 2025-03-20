@@ -136,6 +136,10 @@ the widget and its layout
 
 ## [0.4.0] - 2025-03-19
 
+### Added
+- Minor bootstrap styling to GridSystem widgets as well as the buttons within the
+widgets
+
 ### Changed
 - Major restructure to the frontend
 - Moved todo list rendering outside of Widget, instead making Widget its parent.
@@ -146,3 +150,17 @@ data it needs to display and functions from Widget to call
 ### NOTE
 - As of now, editing widget data through the modal creates a new widget entry. The 
 data to be edited is not being passed correctly
+
+## [0.4.1] - 2025-03-19
+
+### Added
+- Todo list task name length constraints and is_completed binary check in main
+process
+- Styling to create todo item modal
+
+### Changed
+- Removed todo item checkboxes, now clicking on text toggles strikethrough
+
+### Fixed
+- Bug that did not allow data editing
+- Small bug that did not reset form text after closing modal
